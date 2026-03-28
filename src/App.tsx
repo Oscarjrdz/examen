@@ -7,32 +7,46 @@ import confetti from 'canvas-confetti';
 
 type ViewState = 'LOGIN' | 'MAP' | 'THEORY' | 'QUIZ' | 'SUCCESS' | 'PROFILE';
 
+type SubjectProgress = {
+  tier: number;       // 0: Green, 1: Orange, 2: Purple, 3: Gold
+  completed: number[]; // Array of completed level IDs in the CURRENT tier
+};
+
 type UserData = {
   password: string;
   xp: number;
-  progress: Record<string, Record<number, number>>; // { subjectId: { levelId: tier (0-3) } }
+  progress: Record<string, SubjectProgress>;
 };
 
 const getTierColor = (tier: number) => {
   switch (tier) {
-    case 0: return { main: '#58CC02', dark: '#58A700', shadow: 'rgba(88,204,2,0.2)', name: 'Verde' };     // Green
-    case 1: return { main: '#FF9600', dark: '#CC7800', shadow: 'rgba(255,150,0,0.2)', name: 'Naranja' };  // Orange
-    case 2: return { main: '#CE82FF', dark: '#A568CC', shadow: 'rgba(206,130,255,0.2)', name: 'Morado' };  // Purple
-    case 3: return { main: '#FFC800', dark: '#E6B500', shadow: 'rgba(255,200,0,0.2)', name: 'Maestro' };   // Gold
+    case 0: return { main: '#58CC02', dark: '#58A700', shadow: 'rgba(88,204,2,0.2)', name: 'Verde' };     
+    case 1: return { main: '#FF9600', dark: '#CC7800', shadow: 'rgba(255,150,0,0.2)', name: 'Naranja' };  
+    case 2: return { main: '#CE82FF', dark: '#A568CC', shadow: 'rgba(206,130,255,0.2)', name: 'Morado' };  
+    case 3: return { main: '#FFC800', dark: '#E6B500', shadow: 'rgba(255,200,0,0.2)', name: 'Maestro' };   
     default: return { main: '#58CC02', dark: '#58A700', shadow: 'rgba(88,204,2,0.2)', name: 'Verde' };
   }
+};
+
+const LOCAL_DICTIONARY: Record<string, string> = {
+  "garza": "Benjamín Garza Olvera es autor del libro 'Estadística y Probabilidad', la bibliografía oficial básica que el CENEVAL exige para el EXANI-II.",
+  "olvera": "Benjamín Garza Olvera es autor del libro 'Estadística y Probabilidad', la bibliografía oficial básica que el CENEVAL exige para el EXANI-II.",
+  "mendenhall": "William Mendenhall es coautor de 'Introducción a la Probabilidad y Estadística', uno de los libros más analíticos y citados por el EXANI-II.",
+  "munch": "Lourdes Münch Galindo es una autora mexicana cuyo libro 'Fundamentos de Administración' es la referencia central obligatoria para el módulo de Administración.",
+  "münch": "Lourdes Münch Galindo es una autora mexicana cuyo libro 'Fundamentos de Administración' es la referencia central obligatoria para el módulo de Administración.",
+  "robbins": "Stephen P. Robbins es el autor del famoso libro 'Administración', usado en todo el mundo y bibliografía oficial del EXANI-II.",
+  "ceneval": "Centro Nacional de Evaluación para la Educación Superior. Diseñan y aplican el EXANI-II a nivel nacional.",
+  "exani": "Examen Nacional de Ingreso a la Educación Superior. Evalúa competencias básicas y módulos de especialidad."
 };
 
 export default function App() {
   const [view, setView] = useState<ViewState>('LOGIN');
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   
-  // App State tied to User
-  const [progress, setProgress] = useState<Record<string, Record<number, number>>>({});
+  const [progress, setProgress] = useState<Record<string, SubjectProgress>>({});
   const [xp, setXp] = useState<number>(0);
   const [activeSubjectId, setActiveSubjectId] = useState<string>(subjects[0].id);
 
-  // Load user session on mount
   useEffect(() => {
     const activeSession = sessionStorage.getItem('exani_active_user');
     if (activeSession) {
@@ -40,7 +54,6 @@ export default function App() {
     }
   }, []);
 
-  // Save changes to localStorage
   useEffect(() => {
     if (currentUser) {
       const usersRaw = localStorage.getItem('exani_users');
@@ -58,18 +71,25 @@ export default function App() {
     setXp(users[username]?.xp || 0);
     
     let loadedProgress = users[username]?.progress || {};
-    let migratedProgress: Record<string, Record<number, number>> = {};
+    let migratedProgress: Record<string, SubjectProgress> = {};
     
-    // Migration from number[] to Record<number, number>
+    // Recovery migration
     Object.keys(loadedProgress).forEach(subj => {
       const p = loadedProgress[subj];
       if (Array.isArray(p)) {
-        migratedProgress[subj] = {};
-        p.forEach(nodeId => {
-          migratedProgress[subj][nodeId] = 1; // Mark as finished green (Tier 1)
-        });
-      } else {
-        migratedProgress[subj] = p as any;
+        migratedProgress[subj] = { tier: 0, completed: p as number[] };
+      } else if (p && typeof p === 'object') {
+        if ('tier' in p && 'completed' in p) {
+           migratedProgress[subj] = p as any;
+        } else {
+           // Crown format fallback: Rescue the completed nodes and reset tier to 0
+           let comps: number[] = [];
+           Object.keys(p).forEach(k => {
+             const tierVal = (p as any)[k];
+             if (tierVal >= 1) comps.push(Number(k));
+           });
+           migratedProgress[subj] = { tier: 0, completed: comps }; 
+        }
       }
     });
     
@@ -86,7 +106,6 @@ export default function App() {
     setView('LOGIN');
   };
 
-  // Quiz & Theory State
   const [activeLevel, setActiveLevel] = useState<Level | null>(null);
   const [activeTier, setActiveTier] = useState<number>(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -105,21 +124,33 @@ export default function App() {
   };
 
   const handleLevelComplete = () => {
-    const pList = progress[activeSubjectId] || {};
-    const currentTierForNode = pList[activeLevel!.id] || 0;
+    const subjProgress = progress[activeSubjectId] || { tier: 0, completed: [] };
+    const currentCompleted = [...subjProgress.completed];
+    let newTier = subjProgress.tier;
     
-    if (activeTier === currentTierForNode && currentTierForNode < 3) {
-      setProgress({
-        ...progress,
-        [activeSubjectId]: {
-          ...pList,
-          [activeLevel!.id]: currentTierForNode + 1
-        }
-      });
+    if (!currentCompleted.includes(activeLevel!.id)) {
+      currentCompleted.push(activeLevel!.id);
       setXp(xp + 15);
-    } else if (activeTier === 3) {
-      setXp(xp + 5); // Just 5 points for reviewing a mastered node
+      
+      // Global Phase Up / Reset
+      const activeSub = subjects.find(s => s.id === activeSubjectId)!;
+      if (currentCompleted.length >= activeSub.levels.length) {
+         if (newTier < 3) {
+            newTier += 1;
+            currentCompleted.length = 0; // Empty the array to restart the map!
+         }
+      }
+    } else {
+      setXp(xp + 5); 
     }
+
+    setProgress({
+      ...progress,
+      [activeSubjectId]: {
+        tier: newTier,
+        completed: currentCompleted
+      }
+    });
 
     confetti({
       particleCount: 150,
@@ -129,8 +160,6 @@ export default function App() {
     });
     setView('SUCCESS');
   };
-
-  // ---------------- Views ----------------
 
   const LoginView = () => {
     const [name, setName] = useState('');
@@ -155,7 +184,7 @@ export default function App() {
           setErrorMsg('Contraseña incorrecta.');
         }
       } else {
-        users[username] = { password: pwd, xp: 0, progress: {} };
+        users[username] = { password: pwd, xp: 0, progress: { tier: 0, completed: [] } as any };
         localStorage.setItem('exani_users', JSON.stringify(users));
         loadUserData(username);
       }
@@ -209,11 +238,16 @@ export default function App() {
 
   const MapView = () => {
     const activeSub = subjects.find(s => s.id === activeSubjectId)!;
-    const currentProgress = progress[activeSubjectId] || {};
+    const subjProgress = progress[activeSubjectId] || { tier: 0, completed: [] };
+    const globalTier = subjProgress.tier;
+    const currentProgress = subjProgress.completed || [];
+    const colors = getTierColor(globalTier);
+
+    const firstUncompletedIndex = activeSub.levels.findIndex(lvl => !currentProgress.includes(lvl.id));
+    const activeIndexToPlay = firstUncompletedIndex === -1 ? activeSub.levels.length - 1 : firstUncompletedIndex;
 
     return (
       <div className="pb-32 px-4 max-w-md mx-auto flex flex-col items-center w-full">
-        {/* Subject scrollable tabs */}
         <div className="flex overflow-x-auto w-full gap-3 py-4 mt-2 px-2 snap-x hide-scrollbar">
           {subjects.map(sub => (
             <button 
@@ -228,46 +262,53 @@ export default function App() {
           ))}
         </div>
 
-        <div className="text-center mt-6 mb-10 px-2">
+        <div className="text-center mt-4 mb-8 px-2">
           <h2 className="text-2xl font-extrabold text-gray-800">{activeSub.title}</h2>
-          <p className="text-gray-500 font-bold mt-1 text-sm">{activeSub.description}</p>
+          <div className="inline-block mt-2 font-bold px-3 py-1 rounded-full text-white text-xs uppercase tracking-widest" style={{backgroundColor: colors.main}}>
+             Fase {colors.name}
+          </div>
         </div>
 
         <div className="flex flex-col items-center gap-8 relative w-full pt-4">
           {activeSub.levels.map((lvl, idx) => {
-            const nodeTier = currentProgress[lvl.id] || 0;
-            const isUnlocked = idx === 0 || (currentProgress[activeSub.levels[idx - 1].id] || 0) >= 1;
-            const isMastered = nodeTier >= 3;
+            const isCompleted = currentProgress.includes(lvl.id);
+            const isUnlocked = idx === 0 || currentProgress.includes(activeSub.levels[idx - 1].id);
             
             const offset = Math.sin(idx * 0.8) * 50;
             const nextOffset = idx < activeSub.levels.length - 1 ? Math.sin((idx + 1) * 0.8) * 50 : 0;
             const dx = nextOffset - offset;
             const isCurveRight = dx > 0;
             
-            const colors = getTierColor(nodeTier);
+            let btnClass = `w-24 h-24 rounded-full flex items-center justify-center transform transition-all active:scale-95 z-10`;
+            let btnStyle = {};
+            
+            if (!isUnlocked) {
+               btnClass += ' cursor-not-allowed opacity-60 bg-gray-300 border-b-[8px] border-gray-400';
+            } else if (isCompleted) {
+               btnClass += ' cursor-pointer';
+               btnStyle = { backgroundColor: colors.main, borderBottom: `8px solid ${colors.dark}` };
+            } else {
+               btnClass += ' cursor-pointer bg-[#1CB0F6] border-b-[8px] border-[#1899D6] shadow-[0_0_0_8px_rgba(28,176,246,0.2)]';
+            }
 
             return (
               <div key={lvl.id} className="relative flex flex-col items-center" style={{ transform: `translateX(${offset}px)` }}>
-                {isUnlocked && !isMastered && (
-                  <motion.div animate={{y: [0, -10, 0]}} transition={{repeat: Infinity, duration: 2}} className="absolute -top-12 bg-white px-4 py-2 rounded-2xl border-2 border-gray-200 font-bold text-gray-600 shadow-sm z-20 tooltip text-sm flex gap-1 items-center">
-                    {!isMastered && <span className="w-2 h-2 rounded-full block" style={{backgroundColor: colors.main}}></span>}
-                    {nodeTier === 0 ? 'Fase Verde' : nodeTier === 1 ? 'Media Naranja' : 'Avanzado Morado'}
+                {idx === activeIndexToPlay && !isCompleted && (
+                  <motion.div animate={{y: [0, -10, 0]}} transition={{repeat: Infinity, duration: 2}} className="absolute -top-12 bg-white px-4 py-2 rounded-2xl border-2 border-gray-200 font-bold text-gray-600 shadow-sm z-20 tooltip text-sm flex gap-1 items-center whitespace-nowrap">
+                    ¡Comienza aquí!
                     <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-gray-200 rotate-45"></div>
                   </motion.div>
                 )}
                 
                 <button
-                  onClick={() => isUnlocked && startLevel(lvl, nodeTier)}
+                  onClick={() => isUnlocked && startLevel(lvl, globalTier)}
                   disabled={!isUnlocked}
-                  className={`
-                    w-24 h-24 rounded-full flex items-center justify-center transform transition-all active:scale-95 z-10
-                    ${isUnlocked ? 'cursor-pointer' : 'cursor-not-allowed opacity-60 bg-gray-300 border-b-[8px] border-gray-400'}
-                  `}
-                  style={isUnlocked ? { backgroundColor: colors.main, borderBottom: `8px solid ${colors.dark}`, boxShadow: `0 0 0 8px ${colors.shadow}` } : {}}
+                  className={btnClass}
+                  style={btnStyle}
                 >
                   {!isUnlocked ? <Lock className="w-10 h-10 text-gray-500" strokeWidth={2.5} /> : 
-                   isMastered ? <Trophy className="w-11 h-11 text-white fill-current" /> : 
-                   <Star className="w-11 h-11 text-white fill-current" />}
+                   isCompleted ? <Check className="w-12 h-12 text-white" strokeWidth={4} /> : 
+                   <Star className="w-12 h-12 text-white fill-current" />}
                 </button>
                 
                 <div className="mt-4 font-extrabold text-gray-700 text-center max-w-[130px] text-[15px] leading-tight flex-col hidden sm:flex">
@@ -276,7 +317,7 @@ export default function App() {
 
                 {idx < activeSub.levels.length - 1 && (
                   <svg className="absolute -bottom-16 -z-10" width="100" height="70" style={{ left: isCurveRight ? '50%' : 'auto', right: !isCurveRight ? '50%' : 'auto', transform: isCurveRight ? 'none' : 'scaleX(-1)' }}>
-                    <path d="M0,0 C20,30 40,30 50,70" fill="transparent" stroke="#E5E5E5" strokeWidth="16" strokeLinecap="round" strokeDasharray="1 24"/>
+                    <path d="M0,0 C20,30 40,30 50,70" fill="transparent" stroke={isCompleted ? colors.main : '#E5E5E5'} strokeWidth="16" strokeLinecap="round" strokeDasharray="1 24"/>
                   </svg>
                 )}
               </div>
@@ -297,24 +338,12 @@ export default function App() {
     const isMastered = activeTier >= 3;
     const colors = getTierColor(activeTier);
 
-    const LOCAL_DICTIONARY: Record<string, string> = {
-      "garza": "Benjamín Garza Olvera es autor del libro 'Estadística y Probabilidad', la bibliografía oficial básica que el CENEVAL exige para el EXANI-II.",
-      "olvera": "Benjamín Garza Olvera es autor del libro 'Estadística y Probabilidad', la bibliografía oficial básica que el CENEVAL exige para el EXANI-II.",
-      "mendenhall": "William Mendenhall es coautor de 'Introducción a la Probabilidad y Estadística', uno de los libros más analíticos y citados por el EXANI-II.",
-      "munch": "Lourdes Münch Galindo es una autora mexicana cuyo libro 'Fundamentos de Administración' es la referencia central obligatoria para el módulo de Administración.",
-      "münch": "Lourdes Münch Galindo es una autora mexicana cuyo libro 'Fundamentos de Administración' es la referencia central obligatoria para el módulo de Administración.",
-      "robbins": "Stephen P. Robbins es el autor del famoso libro 'Administración', usado en todo el mundo y bibliografía oficial del EXANI-II.",
-      "ceneval": "Centro Nacional de Evaluación para la Educación Superior. Diseñan y aplican el EXANI-II a nivel nacional.",
-      "exani": "Examen Nacional de Ingreso a la Educación Superior. Evalúa competencias básicas y módulos de especialidad."
-    };
-
     const handleSearch = async () => {
       const cleanQuery = searchQuery.trim().toLowerCase();
       if (!cleanQuery) return;
       setIsSearching(true);
       setSearchResult(null);
 
-      // 1. Verificación local para evitar resultados absurdos de Wikipedia
       let localMatch = null;
       for (const [key, definition] of Object.entries(LOCAL_DICTIONARY)) {
         if (cleanQuery.includes(key)) {
@@ -331,7 +360,6 @@ export default function App() {
          return;
       }
 
-      // 2. Wikipedia fallback for general concepts
       try {
         const searchRes = await fetch(`https://es.wikipedia.org/w/api.php?action=query&origin=*&list=search&srsearch=${encodeURIComponent(searchQuery)}&utf8=&format=json`);
         const searchData = await searchRes.json();
@@ -371,7 +399,7 @@ export default function App() {
           
           <div className="font-extrabold p-2 px-4 rounded-xl w-max flex items-center gap-2 uppercase tracking-wide text-sm shrink-0 mb-4" style={{ backgroundColor: colors.shadow, color: colors.dark }}>
             {isMastered ? <Trophy className="w-5 h-5"/> : <BookOpen className="w-5 h-5"/>} 
-            {isMastered ? 'Repaso Maestro' : `Lección ${colors.name}`}
+            {isMastered ? 'Repaso Maestro' : `Lección Fase ${colors.name}`}
           </div>
           
           <AnimatePresence mode="wait">
@@ -450,14 +478,12 @@ export default function App() {
   const QuizView = () => {
     if (!activeLevel) return null;
     
-    // Choose quiz bank depending on activeTier
-    // Tier 0: Green, Tier 1: Orange, Tier 2: Purple, Tier 3: Gold (re-use Purple)
     let activeQuizArray: QuizQuestion[] = activeLevel.quiz;
     if (activeTier === 1 && activeLevel.quizOrange && activeLevel.quizOrange.length > 0) activeQuizArray = activeLevel.quizOrange;
     if (activeTier >= 2 && activeLevel.quizPurple && activeLevel.quizPurple.length > 0) activeQuizArray = activeLevel.quizPurple;
     
     const colors = getTierColor(activeTier);
-    const question = activeQuizArray[currentQuestionIndex] || activeLevel.quiz[0]; // fallback to logic
+    const question = activeQuizArray[currentQuestionIndex] || activeLevel.quiz[0]; 
     if (!question) return null;
 
     const isCorrect = selectedOption === question.correctAnswer;
@@ -588,13 +614,9 @@ export default function App() {
   };
 
   const ProfileView = () => {
-    let globalCompleted = 0;
     let globalTotal = 0;
-    Object.values(progress).forEach(subjObj => {
-      Object.values(subjObj).forEach(tier => {
-        if (tier > 0) globalCompleted++; // finished at least green
-      });
-    });
+    
+    // We count subjects started, not individual nodes for simplicity now since logic changed
     subjects.forEach(sub => globalTotal += sub.levels.length);
 
     return (
@@ -616,9 +638,9 @@ export default function App() {
           <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
             <div className="flex items-center gap-3">
               <Check className="w-8 h-8 text-[#58CC02] px-1" strokeWidth={4} />
-              <span className="font-extrabold text-xl text-gray-700">Dominios iniciados</span>
+              <span className="font-extrabold text-[17px] text-gray-700">Materias en progreso</span>
             </div>
-            <span className="font-black text-2xl text-[#58CC02]">{globalCompleted} / {globalTotal}</span>
+            <span className="font-black text-xl text-[#58CC02]">{Object.keys(progress).length}</span>
           </div>
         </div>
 
