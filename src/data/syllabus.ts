@@ -18,78 +18,92 @@ export const syllabus: Level[] = [
   {
     id: 1,
     title: "Población y Muestra",
-    description: "Conceptos básicos de estadística.",
+    description: "Conceptos fundamentales",
     theory: [
-      "La estadística se divide en descriptiva e inferencial. Para comenzar, es crucial entender dos conceptos: Población y Muestra.",
-      "Población: Es el conjunto total de individuos, objetos o eventos que tienen las mismas características y sobre el que estamos interesados en obtener conclusiones. (Ej. Todos los estudiantes de preparatoria en México).",
-      "Muestra: Es un subconjunto representativo seleccionado de la población. Debido a que es difícil estudiar a toda la población, analizamos la muestra para inferir resultados. (Ej. 500 estudiantes de diversas preparatorias)."
+      "El EXANI-II se basa estrictamente en la bibliografía de Mendenhall y Garza Olvera. La base de la estadística descriptiva requiere diferenciar dos conceptos universales:",
+      "Población (N): Es el conjunto TOTAL de elementos a estudiar. Ejemplo: Todos los votantes registrados en un país. Estudiarla completa se llama 'Censo'.",
+      "Muestra (n): Es un subconjunto REPRESENTATIVO de la población. Se usa cuando estudiar a toda la población es caro o imposible. Ejemplo: Encuestar a 1,000 votantes al azar."
     ],
     quiz: [
       {
-        id: "q1_1",
-        question: "Si queremos conocer el promedio de calificaciones de todos los alumnos de nuevo ingreso en una universidad y analizamos las calificaciones de 100 alumnos elegidos al azar, ¿qué representa el grupo de 100 alumnos?",
-        options: ["Población", "Muestra", "Variable", "Dato atípico"],
+        id: "q_1_1",
+        question: "Una investigadora quiere conocer el nivel de estrés de los médicos en México. Para ello, selecciona a 300 médicos de distintos hospitales del país. ¿Qué concepto estadístico representan los 300 médicos?",
+        options: ["Población", "Muestra", "Variable de estudio"],
         correctAnswer: 1,
-        explanation: "Correcto. Como solo se analizó una parte del total (100 alumnos), esta representa una muestra."
+        explanation: "Correcto. Como los 300 médicos son solo una parte seleccionada del total (todos los médicos en México), representan una muestra representativa."
+      },
+      {
+        id: "q_1_2",
+        question: "En una fábrica de focos se revisa la calidad de 50 piezas de cada lote de 10,000 focos que se produce. ¿Qué representa el lote entero de 10,000 focos?",
+        options: ["Censo", "Muestra", "Población"],
+        correctAnswer: 2,
+        explanation: "Correcto. El lote total del cual se extraen las piezas a revisar es la Población."
       }
     ]
   },
   {
     id: 2,
     title: "Tipos de Variables",
-    description: "Cualitativas y cuantitativas.",
+    description: "Cualitativas y cuantitativas",
     theory: [
-      "Una variable estadística es una característica que puede fluctuar y cuya variación es susceptible de adoptar diferentes valores.",
-      "Variables Cualitativas (Categóricas): Expresan cualidades, características o modalidades. Ejemplos: Color de ojos, estado civil, tipo de sangre. Se dividen en Ordinales (tienen un orden natural, como el grado escolar) y Nominales (sin orden, como el color favorito).",
-      "Variables Cuantitativas (Numéricas): Se expresan mediante cantidades numéricas. Se dividen en Discretas (toman valores enteros, ej. número de hijos) y Continuas (toman valores infinitos en un intervalo, ej. peso o altura, 65.5 kg)."
+      "Seguro vendrá al menos un reactivo de este tema. Una variable estadística es la característica que estamos midiendo.",
+      "Variables Cualitativas (Letras o cualidades): No se pueden medir numéricamente. \n• Nominales: No hay orden (Ej. Color de piel, Estado civil).\n• Ordinales: Hay un orden jerárquico (Ej. Nivel de estudios: básico, medio, superior).",
+      "Variables Cuantitativas (Números): \n• Discretas: Valores enteros, se 'cuentan' (Ej. Número de hijos: 1, 2, no puedes tener 1.5). \n• Continuas: Valores con decimales, se 'miden' (Ej. Peso: 65.4 kg, Tiempo: 12.3 seg)."
     ],
     quiz: [
       {
-        id: "q2_1",
-        question: "¿Qué tipo de variable es 'el número de goles marcados en un partido de fútbol'?",
-        options: ["Cualitativa nominal", "Cualitativa ordinal", "Cuantitativa continua", "Cuantitativa discreta"],
-        correctAnswer: 3,
-        explanation: "Correcto. Es una variable cuantitativa (números) y discreta porque solo puedes marcar enteros (0, 1, 2 goles, no 1.5 goles)."
+        id: "q_2_1",
+        question: "¿Qué tipo de variable es 'la cantidad de goles que anota un equipo de fútbol en un torneo'?",
+        options: ["Cuantitativa discreta", "Cuantitativa continua", "Cualitativa ordinal"],
+        correctAnswer: 0,
+        explanation: "Correcto. Los goles se cuentan en enteros (1, 2, 3 goles). No existen los goles decimales o medios goles, por lo que es cuantitativa discreta."
+      },
+      {
+        id: "q_2_2",
+        question: "Se clasifica una encuesta de satisfacción en: 'Muy malo', 'Malo', 'Regular', 'Bueno', 'Excelente'. Esta variable es...",
+        options: ["Cualitativa nominal", "Cualitativa ordinal", "Cuantitativa discreta"],
+        correctAnswer: 1,
+        explanation: "Correcto. Al tratarse de categorías que expresan una cualidad, y que tienen un orden lógico implícito, se trata de una variable cualitativa ordinal."
       }
     ]
   },
   {
     id: 3,
     title: "Frecuencias",
-    description: "Absoluta, relativa, acumulada...",
+    description: "Agrupación de datos",
     theory: [
-      "Las frecuencias nos ayudan a organizar los datos para ver cómo se distribuyen.",
-      "Frecuencia Absoluta (f): Es el número de veces que aparece un determinado valor en un estudio estadístico.",
-      "Frecuencia Relativa (fr): Es el cociente entre la frecuencia absoluta y el tamaño de la muestra (N). fr = f / N. A menudo se expresa como Porcentaje (fr * 100%).",
-      "Frecuencia Acumulada (F): Es la suma de las frecuencias absolutas de todos los valores inferiores o iguales al valor considerado."
+      "Para organizar los datos utilizamos tablas de frecuencias.",
+      "• Frecuencia Absoluta (f): El conteo total de las veces que aparece un dato.",
+      "• Frecuencia Relativa (fr): Es la división de la frecuencia absoluta entre el número total de datos (f/n). A menudo se expresa en porcentaje multiplicándola por 100.",
+      "• Frecuencia Acumulada (F): Consiste en ir sumando progresivamente las frecuencias absolutas desde el primer dato hasta el último."
     ],
     quiz: [
       {
-        id: "q3_1",
-        question: "En una clase de 20 alumnos, 5 sacaron 10 de calificación. ¿Cuál es la frecuencia relativa (en porcentaje) de alumnos que sacaron 10?",
-        options: ["5%", "20%", "25%", "50%"],
-        correctAnswer: 2,
-        explanation: "Correcto. La frecuencia relativa es 5 / 20 = 0.25, que multiplicado por 100 da 25%."
+        id: "q_3_1",
+        question: "En una encuesta a 50 personas sobre su mascota, 10 tienen gato y 40 tienen perro. ¿Cuál es la frecuencia relativa en porcentaje de las personas con gato?",
+        options: ["10%", "20%", "40%"],
+        correctAnswer: 1,
+        explanation: "Correcto. La frecuencia relativa se calcula dividiendo la frecuencia absoluta (10 gatos) entre el total (50). 10 / 50 = 0.20, lo cual equivale al 20%."
       }
     ]
   },
   {
     id: 4,
     title: "Gráficos Estadísticos",
-    description: "Tabulares y representación visual",
+    description: "Visualización de frecuencias",
     theory: [
-      "Una vez organizadas las frecuencias en Tablas (Representación tabular), se pueden visualizar mediante gráficos.",
-      "Gráfico de Barras: Se usa para variables cualitativas o cuantitativas discretas. Cada barra representa una categoría.",
-      "Histograma: Se usa para variables continuas, agrupadas en intervalos (clases). Las barras están juntas.",
-      "Gráfico Circular (Pastel): Útil para representar proporciones o porcentajes de un total (frecuencias relativas)."
+      "Cada tipo de variable requiere un gráfico específico según Lipschutz y Ceneval:",
+      "Gráfico de Barras: Se usa siempre para variables Cualitativas o Cuantitativas Descretas. Las barras tienen separaciones.",
+      "Histograma: Exclusivísimo para variables Cuantitativas Continuas organizadas por intervalos de clase (como rangos de edad de 10-15, 15-20). Las barras van pegadas entre sí.",
+      "Gráfico de Pastel (Circular): Ideal para mostrar las frecuencias relativas (porcentajes) de un todo."
     ],
     quiz: [
       {
-        id: "q4_1",
-        question: "¿Qué tipo de gráfico es el más adecuado para representar la distribución del 'tipo de sangre' de los donantes en un hospital?",
-        options: ["Histograma de frecuencias", "Gráfico circular o de barras", "Polígono de frecuencias", "Diagrama de dispersión"],
-        correctAnswer: 1,
-        explanation: "Correcto. El tipo de sangre es una variable cualitativa nominal. Un gráfico de pastel o de barras es ideal para mostrar proporciones o conteos absolutos."
+        id: "q_4_1",
+        question: "¿Qué gráfico usarías para representar los pesos exactos (variable continua) de 2,000 estudiantes de nuevo ingreso agrupados en rangos de 5 kg?",
+        options: ["Histograma", "Gráfica de barras", "Polígono de frecuencias absolutas"],
+        correctAnswer: 0,
+        explanation: "Correcto. Para datos cuantitativos continuos que están estrechamente unidos o agrupados en rangos (15 a 20 kilos), el Histograma es obligatorio."
       }
     ]
   },
@@ -98,172 +112,200 @@ export const syllabus: Level[] = [
     title: "Medidas Centrales",
     description: "Media, Mediana y Moda",
     theory: [
-      "Buscan resumir en un solo número el 'centro' de un conjunto de datos.",
-      "Media (Promedio): Es la suma de todos los datos dividida entre el total de datos. (Ej. Calificaciones del semestre).",
-      "Mediana: Es el valor que ocupa el lugar central de todos los datos cuando estos están ordenados de menor a mayor. Si los datos son un número par, es el promedio de los dos centrales.",
-      "Moda: Es el valor que más se repite, es decir, el que tiene mayor frecuencia absoluta. Puede haber más de una moda."
+      "Conocidas como medidas de tendencia central.",
+      "La Media (x̄ o Promedio): Se calcula sumando todos los datos numéricos y dividiendo entre el total de observaciones. (Cuidado: es muy sensible a datos atípicos extremos, un '0' baja todo el promedio).",
+      "La Mediana (Me): Es literalmente el dato del centro cuando los ordenas de menor a mayor. Si tienes datos pares (ej. 4 datos), sumas los dos del centro y sacas tú promedio.",
+      "La Moda (Mo): Simplemente el valor que más se repite. (Puede haber series 'bimodales' si hay 2 que se repiten lo mismo)."
     ],
     quiz: [
       {
-        id: "q5_1",
-        question: "Calcula la mediana de los siguientes datos: 10, 15, 12, 18, 14",
-        options: ["14", "13.8", "12", "15"],
-        correctAnswer: 0,
-        explanation: "Correcto. Ordenando los datos: 10, 12, 14, 15, 18. El valor central es el tercero: 14."
+        id: "q_5_1",
+        question: "En el examen de la guía oficial de Ceneval te piden calcular la Media de: 15, 22, 13, 17, 12, 16, 21, 22, 11, 26, 23. ¿Cuál es el resultado?",
+        options: ["17", "18", "22"],
+        correctAnswer: 1,
+        explanation: "Correcto. Si sumas los 11 valores (total 198) y los divides entre 11, el resultado exacto es 18."
+      },
+      {
+        id: "q_5_2",
+        question: "Calcula la mediana del siguiente conjunto ordenado: 10, 11, 14, 18.",
+        options: ["11", "14", "12.5"],
+        correctAnswer: 2,
+        explanation: "Correcto. Al ser 4 datos (número par), identificamos los dos del centro que son 11 y 14. Su promedio es (11 + 14) / 2 = 12.5."
       }
     ]
   },
   {
     id: 6,
-    title: "Medidas de Dispersión",
+    title: "Dispersión",
     description: "Varianza y Desviación Estándar",
     theory: [
-      "Indican qué tan separados o dispersos están los datos con respecto a la media.",
-      "Varianza (σ² o s²): Es el promedio de las diferencias al cuadrado entre cada dato y la media. Al estar al cuadrado, la unidad de medida no es la original.",
-      "Desviación Estándar (σ o s): Es la raíz cuadrada de la varianza. Esta medida sí está en las mismas unidades que los datos originales y nos dice, en promedio, qué tan alejados están los datos de la media."
+      "Las medidas de dispersión nos dicen si los datos están muy juntos o muy separados entre sí.",
+      "Varianza (σ²): Mide la dispersión elevando al cuadrado las diferencias entre cada dato y la media. Como está al cuadrado, NO nos sirve para interpretarlo directamente en el problema base (Ej. pesos al cuadrado).",
+      "Desviación Estándar (σ): ¡Es la favorita del examen! Es simplemente la RAÍZ CUADRADA de la Varianza. Significa el promedio general de qué tan alejados están los datos respecto a su Media (promedio)."
     ],
     quiz: [
       {
-        id: "q6_1",
-        question: "Si la varianza de un conjunto de estaturas es de 25 cm², ¿cuál es su desviación estándar?",
-        options: ["625 cm", "12.5 cm", "5 cm", " No se puede saber"],
-        correctAnswer: 2,
-        explanation: "Correcto. La desviación estándar es la raíz cuadrada de la varianza. √25 = 5 cm."
+        id: "q_6_1",
+        question: "Un grupo de científicos calcula que la varianza del crecimiento poblacional de bacterias es de 144 cm². ¿Cuál será su desviación estándar?",
+        options: ["12 cm", "72 cm", "144 cm"],
+        correctAnswer: 0,
+        explanation: "Correcto. La desviación estándar siempres es la raíz cuadrada de la varianza. La raíz de 144 es 12."
       }
     ]
   },
   {
     id: 7,
     title: "Percentiles",
-    description: "Medidas de posición no central",
+    description: "Posiciones relativas",
     theory: [
-      "Los percentiles dividen una serie de datos ordenados en 100 partes iguales.",
-      "Por ejemplo, el percentil 50 (P50) es exactamente igual a la mediana, ya que deja el 50% de los datos por debajo y el 50% por encima.",
-      "El percentil 25 (P25) coincide con el Primer Cuartil (Q1) y el percentil 75 (P75) con el Tercer Cuartil (Q3).",
-      "Son muy útiles en exámenes estandarizados. 'Estar en el percentil 90' significa que tu puntaje fue superior al 90% de los evaluados."
+      "Los percentiles y cuartiles (Medidas de Posición) te ayudan a saber en qué porcentaje un dato supera al resto de la distribución.",
+      "Si la lista de calificaciones se divide en 100 partes iguales, el Percentil 50 (P50) es exactamente el medio. Esto significa que el Percentil 50 ES LO MISMO QUE LA MEDIANA.",
+      "El Primer Cuartil (Q1) es equivalente al Percentil 25. El Tercer Cuartil (Q3) al Percentil 75.",
+      "Nota para tu examen: Obtener el percentil 92 de aciertos significa que fuiste mejor que el 92% de los aspirantes."
     ],
     quiz: [
       {
-        id: "q7_1",
-        question: "Si en el EXANI-II obtienes una calificación que te ubica en el percentil 85 de todos los aspirantes, ¿qué significa esto?",
-        options: [
-          "Que contestaste bien el 85% del examen.",
-          "Que superaste al 85% de los aspirantes.",
-          "Que reprobaste el examen.",
-          "Que estás en el top 85."
-        ],
-        correctAnswer: 1,
-        explanation: "Correcto. El percentil indica el porcentaje de datos que quedan por debajo de tu valor. Un P85 significa que tu puntaje es mayor al del 85% de los participantes."
+        id: "q_7_1",
+        question: "Durante tu EXANI-II, si obtienes un puntaje que te ubica justo en el Segundo Cuartil (Q2), ¿con qué medida coincide esto exactamente?",
+        options: ["Mediana", "Percentil 25", "Media o Promedio"],
+        correctAnswer: 0,
+        explanation: "Correcto. Q1 = 25%, Q2 = 50%, Q3 = 75%. Como el Q2 corresponde al 50%, representa y equivale exactamente al valor de la Mediana."
       }
     ]
   },
   {
     id: 8,
-    title: "Espacio Muestral",
-    description: "Eventos y Teoría de Conjuntos",
+    title: "Conjuntos",
+    description: "Espacio muestral y cardinalidad",
     theory: [
-      "Entramos a Probabilidad. Un 'experimento aleatorio' es aquel cuyo resultado no puede predecirse con certeza (ej. lanzar un dado).",
-      "Espacio Muestral (S o Ω): Es el conjunto de todos los resultados posibles de un experimento aleatorio. Para un dado: S = {1, 2, 3, 4, 5, 6}. Su cardinalidad (número de elementos) es 6.",
-      "Evento o Suceso (A, B...): Es cualquier subconjunto del espacio muestral. Ej. Evento A = 'Sacar número par' = {2, 4, 6}.",
-      "Teoría de conjuntos: Unión (A U B, que pase A o B), Intersección (A ∩ B, que pasen ambos a la vez) y Complemento (A', que no pase A)."
+      "¡Entramos al módulo de 12 reactivos de Probabilidad! El concepto base es el 'Experimento Aleatorio' (tirar dados, monedas...).",
+      "Espacio Muestral (S o Ω): Es el conjunto TOTAL de TODOS los resultados posibles de dicho experimento.",
+      "Cardinalidad (n): El simple conteo del número elementos del espacio. Al lanzar una moneda, S = {Cara, Cruz}, y su Cardinalidad n(S) = 2.",
+      "Teoría de Conjuntos:\n• Unión (A ∪ B): Todos los elementos de A y de B juntos.\n• Intersección (A ∩ B): SOLO los elementos que están en A y B al MINSMO tiempo.\n• Complemento (A'): Lo que le falta a A para ser el espacio entero."
     ],
     quiz: [
       {
-        id: "q8_1",
-        question: "Al lanzar dos monedas distintas al aire, ¿cuál es la cardinalidad de su espacio muestral?",
-        options: ["2", "4", "6", "8"],
+        id: "q_8_1",
+        question: "Diga la cardinalidad del espacio muestral al lanzar un dado normal de seis caras.",
+        options: ["1", "6", "36"],
         correctAnswer: 1,
-        explanation: "Correcto. Las combinaciones son: (Águila, Águila), (Águila, Sol), (Sol, Águila), (Sol, Sol). En total 4."
+        explanation: "Correcto. El Espacio Muestral es {1, 2, 3, 4, 5, 6}, contando los elementos vemos que su tamaño o cardinalidad es de 6."
+      },
+      {
+        id: "q_8_2",
+        question: "En un experimento se tiene la urna A = {1, 2, 3} y la urna B = {3, 4, 5}. ¿Cuál es la intersección (A ∩ B)?",
+        options: ["{1, 2, 3, 4, 5}", "{3}", "{1, 2, 4, 5}"],
+        correctAnswer: 1,
+        explanation: "Correcto. La intersección significa 'elemento en común en ambos conjuntos al mismo tiempo', que en este caso es solo el número 3."
       }
     ]
   },
   {
     id: 9,
-    title: "Técnicas de Conteo",
-    description: "Permutaciones y Combinaciones",
+    title: "Conteo y Factoriales",
+    description: "Permutaciones vs Combinaciones",
     theory: [
-      "A veces el espacio muestral es tan grande que no podemos listar todo. Usamos técnicas de conteo.",
-      "Principio multiplicativo: Si un evento ocurre de 'm' formas y otro de 'n' formas, juntos ocurren de m × n formas.",
-      "Permutaciones (Importa el orden): Formas de ordenar 'r' de 'n' objetos distintivos. P(n,r) = n! / (n-r)!. Ej. Otorgar oro, plata y bronce a 10 corredores.",
-      "Combinaciones (No importa el orden): Formas de elegir 'r' elementos de 'n'. C(n,r) = n! / (r! (n-r)!). Ej. Formar un comité de 3 personas de entre 10."
+      "Cuando los espacios muestrales son de miles de posibilidades usamos Factoriales (!). El factorial de n (n!) es multiplicar: 4! = 4x3x2x1 = 24.",
+      "TRUCO EXANI: Siempre pregúntate si '¿Importa el orden?'.",
+      "PERMUTACIONES (SÍ importa el orden): Sirven para armar claves, contraseñas, sillas en línea, premiaciones (1er, 2do y 3er lugar).",
+      "COMBINACIONES (NO importa el orden): Sirven para licuados de frutas, conformar comités, equipos, tomar cartas aleatorias. (Tener a Juan y Pedro en tu equipo es igual a tener a Pedro y Juan)."
     ],
     quiz: [
       {
-        id: "q9_1",
-        question: "¿De cuántas formas se puede elegir a un presidente, un secretario y un tesorero de un grupo de 5 personas?",
-        options: ["15", "60", "120", "10"],
+        id: "q_9_1",
+        question: "Un entrenador quiere tomar del banquillo de 8 jugadores, a 2 para formar una barrera en un tiro libre. ¿Es combinación o permutación?",
+        options: ["Permutación, porque hay jerarquías.", "Combinación, porque el orden no importa.", "Ninguna, aplica teorema de Bayes."],
         correctAnswer: 1,
-        explanation: "Correcto. Importa el orden (los puestos son distintos). Es una permutación de 5 en 3: 5 * 4 * 3 = 60."
+        explanation: "Correcto. Al formar una barrera el jugador A a la derecha y B a la izquierda es la misma barrera formada por las mismas dos personas. Es una Combinación."
+      },
+      {
+        id: "q_9_2",
+        question: "Se va a elegir al Gerente y al Sub-Gerente general de la planta donde trabajan 15 personas. Para saber las formas en hacerlo usamos...",
+        options: ["Una Combinación", "Una Permutación", "Una Distribución normal"],
+        correctAnswer: 1,
+        explanation: "Correcto. Los cargos son distintos, así que el orden SÍ importa (ser gerente no es lo mismo que subgerente). Usamos Permutación."
       }
     ]
   },
   {
     id: 10,
-    title: "Axiomas de Prob.",
-    description: "Reglas de la probabilidad clásica",
+    title: "Axiomas de L.",
+    description: "Las 3 leyes inquebrantables",
     theory: [
-      "La probabilidad es una medida de la certeza de que ocurra un evento.",
-      "Regla de Laplace: Probabilidad(A) = (Resultados favorables) / (Casos totales posibles).",
-      "Axioma 1: La probabilidad siempre es un valor entre 0 y 1 (0 ≤ P(A) ≤ 1). Un evento imposible tiene probabilidad 0 y un evento seguro 1.",
-      "Axioma 2: P(Espacio Muestral) = 1.",
-      "Axioma 3: Si dos eventos A y B son mutuamente excluyentes (no pueden ocurrir al mismo tiempo), entonces P(A U B) = P(A) + P(B)."
+      "La probabilidad P(A) de que suceda un evento de calculará (Regla de Laplace) al divdir Casos Favorables entre Casos Totales.",
+      "Reglas de Kolmogorov o Axiomas (memorízalas porque de esto sale mucha teoría):",
+      "1. La probabilidad P(A) SIEMPRE debe ser entre 0 y 1. Un evento imposible = 0. Un evento seguro = 1. Jamás existirá probabilidad negativa ni mayor a 1 (o mayor a 100%).",
+      "2. La probabilidad de todo tu Espacio muestral (que suceda cualquier cosa) es exactamente 1 o 100%.",
+      "3. Si dos eventos no pueden suceder al mismo tiempo (Excluyentes: ej. sacar águila y sol en 1 volado al mismo tiempo), la probabilidad se suma."
     ],
     quiz: [
       {
-        id: "q10_1",
-        question: "Si lanzo un dado, ¿cuál es la probabilidad de que NO salga un 3?",
-        options: ["1/6", "5/6", "6/6", "0"],
-        correctAnswer: 1,
-        explanation: "Correcto. Sacar 3 tiene probabilidad 1/6. Su evento complementario (no sacar 3) tiene probabilidad 1 - 1/6 = 5/6."
+        id: "q_10_1",
+        question: "Al hacer los cálculos de su examen en un ejercicio, un aspirante encuentra que la Probabilidad de un evento F es de 1.15. ¿Qué significa esto?",
+        options: ["Es altamente probable que el evento suceda.", "El evento será un éxito rotundo.", "El cálculo está mal, viola el primer axioma."],
+        correctAnswer: 2,
+        explanation: "Correcto. La probabilidad P(A) JAMÁS puede exceder el número 1. Si los cálculos arrojan valores como 1.15, se realizó algo de manera incorrecta."
       }
     ]
   },
   {
     id: 11,
     title: "Distribuciones",
-    description: "Tipos de distribuciones de probabilidad",
+    description: "Normal, Binomial y Poisson",
     theory: [
-      "Una distribución describe cómo se reparten las probabilidades de los posibles resultados.",
-      "Distribución Binomial: Para eventos con solo dos resultados posibles (éxito/fracaso), que se repiten 'n' veces de forma independiente.",
-      "Distribución Normal (Campana de Gauss): La más importante para variables continuas. Simétrica alrededor de la media y la moda. El 68% de los datos caen a menos de 1 desviación estándar de la media.",
-      "Distribución de Poisson: Útil para modelar el número de veces que ocurre un evento en un intervalo de tiempo o espacio (ej. número de clientes que llegan en 1 hora)."
+      "Según Garza Olvera, necesitas identificar de lejos de qué modelo hablas para no equivocarte de fórmula:",
+      "• Distribución Binomial: Cuando UN MISMO ensayo se repite 'n' veces y ÚNICAMENTE hay 2 resultados posibles: Éxito o Fracaso. (Ej. Vender o no el producto, nacer niño o niña en 10 embarazos).",
+      "• Distribución Poisson: Mide la ocurrencia de eventos raros en UN RANGO de TIEMPO o ESPACIO específico. (Ej. # de accidentes en la Av. Juárez en 1 semana).",
+      "• Distribución Normal: Famosa Campana de Gauss. Se usa en variables continuas (como peso, altura, CI). Aquí, la Moda, Media y Mediana valen exactamente lo mismo en el centro."
     ],
     quiz: [
       {
-        id: "q11_1",
-        question: "¿Qué distribución de probabilidad se representa con la típica 'campana de Gauss'?",
-        options: ["Binomial", "Poisson", "Normal", "Exponencial"],
-        correctAnswer: 2,
-        explanation: "Correcto. La distribución Normal es asintótica y simétrica, gráficamente se conoce como Campana de Gauss."
+        id: "q_11_1",
+        question: "A un hospital general llegan en promedio un flujo de 3 pacientes con rotura de ligamentos diarios. Te piden calcular la probabilidad de que lleguen 5 en un día. ¿Qué distribución es?",
+        options: ["Distribución Binomial", "Distribución de Poisson", "Distribución de T de Student"],
+        correctAnswer: 1,
+        explanation: "Correcto. Al indicarse sucesos por un bloque temporal constante (diariamente o 'en un día'), se debe usar la de Poisson (lambda)."
+      },
+      {
+        id: "q_11_2",
+        question: "Característica clave de la Distribución Normal en su gráfica (Campana de Gauss):",
+        options: ["La media, la mediana y la moda coinciden al centro.", "Los datos sólo toman valores discretos (enteros).", "Tienen probabilidad siempre negativa."],
+        correctAnswer: 0,
+        explanation: "Correcto. En la distribución normal estándar la curva es 100% simétrica, por lo cual coinciden media, moda y mediana en su cúspide."
       }
     ]
   },
   {
     id: 12,
-    title: "Simulador Final",
-    description: "Autoevaluación tipo EXANI-II",
+    title: "EXANI-II Sim.",
+    description: "Simulador definitivo de 3 opciones",
     theory: [
-      "Has terminado toda la currícula y estás listo para poner a prueba tus conocimientos en un simulador real.",
-      "Recordatorio antes del examen:",
-      "- En probabilidad clásica lee siempre todas las opciones.",
-      "- En estadística fíjate bien si te piden varianza (cuadrada) o la desviación.",
-      "- En técnicas de conteo pregúntate primero: ¿Importa el orden?",
-      "¡Mucho éxito!"
+      "¡Felicidades por llegar al Simulador Final del EXANI-II!",
+      "Hemos validado toda la arquitectura de tus conocimientos, siguiendo los lineamientos de los manuales de PEARSON, McGraw Hill y CENGAGE Learning que dicta el Ceneval.",
+      "Recuerda: El examen real solo incluirá opciones de respuesta A, B, y C. Lee tu pregunta con atención, respira hondo y aplica la lógica que te ha traído hasta acá.",
+      "¡Demuestra que esa plaza en la licenciatura ya es tuya!"
     ],
     quiz: [
       {
-        id: "ex_1",
-        question: "Cálcula la media de los siguientes datos: 15, 22, 13, 17, 12, 16, 21, 22, 11, 26, 23 (Ejemplo oficial EXANI-II)",
-        options: ["16", "17", "18", "19"],
-        correctAnswer: 2,
-        explanation: "Correcto. La suma de los datos es 198, que dividido entre 11 (número total de datos) es 18."
+        id: "q_12_1",
+        question: "¿De cuántas maneras diferentes se pueden sentar 5 personas en 5 asientos disponibles en la primera fila de un cine?",
+        options: ["120 formas", "25 formas", "5 formas"],
+        correctAnswer: 0,
+        explanation: "Correcto. Importa el orden, al sentarse una, la siguiente silla solo tiene 4 lugares posibles (Permutación o 5!): 5 x 4 x 3 x 2 x 1 = 120."
       },
       {
-        id: "ex_2",
-        question: "De una población de 50 alumnos, se desea elegir un comité formado por 1 presidente, 1 vicepresidente y 1 vocal. ¿Cuál técnica usarás?",
-        options: ["Probabilidad Binomial", "Combinaciones", "Permutaciones", "Ley de los grandes números"],
+        id: "q_12_2",
+        question: "Determina cuál es la Moda del siguiente conjunto de colores elegidos por alumnos: {Rojo, Verde, Azul, Verde, Negro, Amarillo, Verde, Rojo}.",
+        options: ["Azul", "Rojo", "Verde"],
         correctAnswer: 2,
-        explanation: "Correcto. Ya que los roles (presidente vs vocal) son distintos e importa el orden, requiere Permutaciones."
+        explanation: "Correcto. La moda es el dato de mayor frecuencia absoluta. 'Verde' aparece 3 veces, siendo la más alta."
+      },
+      {
+        id: "q_12_3",
+        question: "Al lanzar dos dados legales, ¿cuál es el número total de resultados que componen nuestro espacio muestral? \n(Principio multiplicativo)",
+        options: ["6", "12", "36"],
+        correctAnswer: 2,
+        explanation: "Correcto. Dado 1 tiene 6 resultados. Dado 2 tiene 6 resultados. Por principio multiplicativo: 6 x 6 = 36 respuestas diferentes."
       }
     ]
   }
