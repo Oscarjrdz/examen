@@ -378,14 +378,50 @@ export default function App() {
                   {lvl.title}
                 </div>
 
-                {idx < activeSub.levels.length - 1 && (
+                {idx < activeSub.levels.length - 1 || globalTier < 3 ? (
                   <svg className="absolute -bottom-16 -z-10" width="100" height="70" style={{ left: isCurveRight ? '50%' : 'auto', right: !isCurveRight ? '50%' : 'auto', transform: isCurveRight ? 'none' : 'scaleX(-1)' }}>
-                    <path d="M0,0 C20,30 40,30 50,70" fill="transparent" stroke={isCompleted ? colors.main : '#E5E5E5'} strokeWidth="16" strokeLinecap="round" strokeDasharray="1 24"/>
+                    <path d="M0,0 C20,30 40,30 50,70" fill="transparent" stroke={isCompleted && idx < activeSub.levels.length - 1 ? colors.main : '#E5E5E5'} strokeWidth="16" strokeLinecap="round" strokeDasharray="1 24"/>
                   </svg>
-                )}
+                ) : null}
               </div>
             );
           })}
+
+          {globalTier < 3 && (
+            <div className="flex flex-col items-center gap-16 w-full pt-4 pb-16">
+              {[
+                { tier: 1, name: "Fase Naranja", title: "Intermedio", main: "#FF9600", dark: "#CC7800", shadow: "rgba(255,150,0,0.2)" },
+                { tier: 2, name: "Fase Morada", title: "Avanzado", main: "#CE82FF", dark: "#A568CC", shadow: "rgba(206,130,255,0.2)" },
+                { tier: 3, name: "Fase Maestro", title: "Simulador Final", main: "#FFC800", dark: "#E6B500", shadow: "rgba(255,200,0,0.2)" }
+              ].filter(t => t.tier > globalTier).map((t, index, arr) => {
+                const idx = activeSub.levels.length + index;
+                const offset = Math.sin(idx * 0.8) * 50;
+                const nextOffset = Math.sin((idx + 1) * 0.8) * 50;
+                const dx = nextOffset - offset;
+                const isCurveRight = dx > 0;
+                
+                return (
+                  <div key={t.tier} className="relative flex flex-col items-center w-full" style={{ transform: `translateX(${offset}px)` }}>
+                    <div 
+                      className="w-full max-w-[200px] rounded-[2rem] p-6 border-b-[8px] flex flex-col items-center justify-center relative overflow-hidden text-white"
+                      style={{ backgroundColor: t.main, borderBottomColor: t.dark, boxShadow: `0 6px 0 ${t.shadow}` }}
+                    >
+                      <div className="absolute inset-0 bg-black/10 z-0"></div>
+                      <Lock className="w-12 h-12 mb-2 z-10 opacity-90" strokeWidth={3} />
+                      <h3 className="text-xl font-black z-10 uppercase tracking-widest text-center opacity-95 leading-tight">{t.name}</h3>
+                      <p className="text-sm font-extrabold z-10 opacity-80 mt-1">{t.title}</p>
+                    </div>
+                    
+                    {index < arr.length - 1 && (
+                      <svg className="absolute -bottom-16 -z-10" width="100" height="70" style={{ left: isCurveRight ? '50%' : 'auto', right: !isCurveRight ? '50%' : 'auto', transform: isCurveRight ? 'none' : 'scaleX(-1)' }}>
+                        <path d="M0,0 C20,30 40,30 50,70" fill="transparent" stroke="#E5E5E5" strokeWidth="16" strokeLinecap="round" strokeDasharray="1 24"/>
+                      </svg>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     );
