@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { syllabus } from './data/syllabus';
+import { subjects } from './data/syllabus';
 import type { Level } from './data/syllabus';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Star, BookOpen, Brain, Map as MapIcon, Lock, Trophy, User, LogOut } from 'lucide-react';
@@ -10,7 +10,7 @@ type ViewState = 'LOGIN' | 'MAP' | 'THEORY' | 'QUIZ' | 'SUCCESS' | 'PROFILE';
 type UserData = {
   password: string;
   xp: number;
-  progress: number[];
+  progress: Record<string, number[]>;
 };
 
 export default function App() {
@@ -18,8 +18,9 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   
   // App State tied to User
-  const [progress, setProgress] = useState<number[]>([]);
+  const [progress, setProgress] = useState<Record<string, number[]>>({});
   const [xp, setXp] = useState<number>(0);
+  const [activeSubjectId, setActiveSubjectId] = useState<string>(subjects[0].id);
 
   // Load user session on mount
   useEffect(() => {
@@ -45,7 +46,14 @@ export default function App() {
     
     setCurrentUser(username);
     setXp(users[username]?.xp || 0);
-    setProgress(users[username]?.progress || []);
+    
+    let loadedProgress = users[username]?.progress || {};
+    // Retro-compatibility migration if older user format
+    if (Array.isArray(loadedProgress)) {
+      loadedProgress = { "probabilidad": loadedProgress };
+    }
+    
+    setProgress(loadedProgress);
     setView('MAP');
     sessionStorage.setItem('exani_active_user', username);
   };
@@ -53,7 +61,7 @@ export default function App() {
   const handleLogout = () => {
     setCurrentUser(null);
     setXp(0);
-    setProgress([]);
+    setProgress({});
     sessionStorage.removeItem('exani_active_user');
     setView('LOGIN');
   };
@@ -75,8 +83,12 @@ export default function App() {
   };
 
   const handleLevelComplete = () => {
-    if (activeLevel && !progress.includes(activeLevel.id)) {
-      setProgress([...progress, activeLevel.id]);
+    const pList = progress[activeSubjectId] || [];
+    if (activeLevel && !pList.includes(activeLevel.id)) {
+      setProgress({
+        ...progress,
+        [activeSubjectId]: [...pList, activeLevel.id]
+      });
       setXp(xp + 15);
     }
     confetti({
@@ -107,27 +119,25 @@ export default function App() {
       const users: Record<string, UserData> = usersRaw ? JSON.parse(usersRaw) : {};
 
       if (users[username]) {
-        // Exists, check password
         if (users[username].password === pwd) {
           loadUserData(username);
         } else {
           setErrorMsg('Contraseña incorrecta.');
         }
       } else {
-        // Create new
-        users[username] = { password: pwd, xp: 0, progress: [] };
+        users[username] = { password: pwd, xp: 0, progress: {} };
         localStorage.setItem('exani_users', JSON.stringify(users));
         loadUserData(username);
       }
     };
 
     return (
-      <div className="min-h-[100dvh] bg-white flex flex-col items-center justify-center p-6 text-center">
-        <Brain className="w-24 h-24 text-[#58CC02] mb-6" />
-        <h1 className="text-3xl font-extrabold text-gray-800 mb-2">Exani-Prep</h1>
-        <p className="text-gray-500 font-bold mb-10">Ingresa o crea tu perfil para guardar tu récord</p>
+      <div className="h-[100dvh] bg-white flex flex-col items-center justify-center p-6 text-center overflow-y-auto w-full">
+        <Brain className="w-24 h-24 text-[#58CC02] mb-6 shrink-0" />
+        <h1 className="text-3xl font-extrabold text-gray-800 mb-2 shrink-0">Exani-Prep</h1>
+        <p className="text-gray-500 font-bold mb-10 shrink-0">Ingresa o crea tu perfil para guardar tu récord</p>
         
-        <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-4">
+        <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-4 shrink-0">
           <input 
             type="text" 
             placeholder="Tu nombre (Ej: Oscar)" 
@@ -155,7 +165,7 @@ export default function App() {
   };
 
   const TopBar = () => (
-    <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b-2 border-gray-200 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3 flex justify-between items-center">
+    <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b-2 border-gray-200 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3 flex justify-between items-center shadow-sm shrink-0">
       <div className="font-extrabold text-[#58CC02] text-2xl flex items-center gap-2">
         <Brain className="w-8 h-8" /> Exani
       </div>
@@ -168,22 +178,38 @@ export default function App() {
   );
 
   const MapView = () => {
+    const activeSub = subjects.find(s => s.id === activeSubjectId)!;
+    const currentProgress = progress[activeSubjectId] || [];
+
     return (
-      <div className="pb-32 px-4 max-w-md mx-auto flex flex-col items-center">
-        <div className="text-center mt-6 mb-10">
-          <h2 className="text-2xl font-extrabold text-gray-800">Probabilidad y Estadística</h2>
-          <p className="text-gray-500 font-bold mt-1">Sigue el camino al éxito</p>
+      <div className="pb-32 px-4 max-w-md mx-auto flex flex-col items-center w-full">
+        {/* Subject scrollable tabs */}
+        <div className="flex overflow-x-auto w-full gap-3 py-4 mt-2 px-2 snap-x hide-scrollbar">
+          {subjects.map(sub => (
+            <button 
+              key={sub.id} 
+              onClick={() => setActiveSubjectId(sub.id)}
+              className={`snap-center shrink-0 px-5 py-3 rounded-2xl font-extrabold text-[15px] border-2 transition-all active:scale-95 button-3d
+                ${activeSubjectId === sub.id ? 'bg-[#1CB0F6] text-white border-[#1899D6] shadow-[0_4px_0_#1899D6]' : 'bg-white text-gray-400 border-gray-200 shadow-[0_4px_0_#E5E5E5]'}
+              `}
+            >
+              {sub.title}
+            </button>
+          ))}
+        </div>
+
+        <div className="text-center mt-6 mb-10 px-2">
+          <h2 className="text-2xl font-extrabold text-gray-800">{activeSub.title}</h2>
+          <p className="text-gray-500 font-bold mt-1 text-sm">{activeSub.description}</p>
         </div>
 
         <div className="flex flex-col items-center gap-8 relative w-full pt-4">
-          {syllabus.map((lvl, idx) => {
-            const isCompleted = progress.includes(lvl.id);
-            const isUnlocked = idx === 0 || progress.includes(syllabus[idx - 1].id);
+          {activeSub.levels.map((lvl, idx) => {
+            const isCompleted = currentProgress.includes(lvl.id);
+            const isUnlocked = idx === 0 || currentProgress.includes(activeSub.levels[idx - 1].id);
             
-            // Wavy path calculation using sine wave
             const offset = Math.sin(idx * 0.8) * 50;
-            const nextOffset = idx < syllabus.length - 1 ? Math.sin((idx + 1) * 0.8) * 50 : 0;
-            // A simple line drawer
+            const nextOffset = idx < activeSub.levels.length - 1 ? Math.sin((idx + 1) * 0.8) * 50 : 0;
             const dx = nextOffset - offset;
             const isCurveRight = dx > 0;
             
@@ -212,12 +238,11 @@ export default function App() {
                    <Lock className="w-10 h-10 text-gray-500" strokeWidth={2.5} />}
                 </button>
                 
-                <div className="mt-3 font-extrabold text-gray-700 text-center max-w-[130px] text-[16px] leading-tight flex-col hidden sm:flex">
+                <div className="mt-3 font-extrabold text-gray-700 text-center max-w-[130px] text-[15px] leading-tight flex-col hidden sm:flex">
                   {lvl.title}
                 </div>
 
-                {/* Connecting lines */}
-                {idx < syllabus.length - 1 && (
+                {idx < activeSub.levels.length - 1 && (
                   <svg className="absolute -bottom-16 -z-10" width="100" height="70" style={{ left: isCurveRight ? '50%' : 'auto', right: !isCurveRight ? '50%' : 'auto', transform: isCurveRight ? 'none' : 'scaleX(-1)' }}>
                     <path d="M0,0 C20,30 40,30 50,70" fill="transparent" stroke="#E5E5E5" strokeWidth="16" strokeLinecap="round" strokeDasharray="1 24"/>
                   </svg>
@@ -267,7 +292,7 @@ export default function App() {
 
         <div className="p-4 px-6 border-t-2 border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 bg-white z-10 w-full max-w-2xl mx-auto">
           <button 
-            className="w-full button-blue rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center gap-2 button-3d"
+            className="w-full button-blue rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center gap-2 button-3d touch-manipulation"
             onClick={() => {
               if (isLastTheory) {
                 setView('QUIZ');
@@ -406,41 +431,48 @@ export default function App() {
     </div>
   );
 
-  const ProfileView = () => (
-    <div className="min-h-screen flex flex-col items-center p-6 pt-[max(3rem,env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
-      <div className="w-32 h-32 bg-[#1CB0F6] rounded-full flex items-center justify-center mb-6 shadow-md border-4 border-white">
-        <User className="w-16 h-16 text-white" />
-      </div>
-      <h1 className="text-3xl font-black text-gray-800 capitalize">{currentUser}</h1>
-      <p className="text-xl text-gray-500 font-extrabold mt-2 mb-10">¡Sigue esforzándote!</p>
+  const ProfileView = () => {
+    let globalCompleted = 0;
+    let globalTotal = 0;
+    Object.values(progress).forEach(arr => globalCompleted += arr.length);
+    subjects.forEach(sub => globalTotal += sub.levels.length);
 
-      <div className="w-full max-w-sm flex flex-col gap-4">
-        <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
-          <div className="flex items-center gap-3">
-            <Star className="w-8 h-8 text-[#FFC800] fill-current" />
-            <span className="font-extrabold text-xl text-gray-700">Experiencia</span>
-          </div>
-          <span className="font-black text-2xl text-[#FFC800]">{xp} XP</span>
+    return (
+      <div className="min-h-screen flex flex-col items-center p-6 pt-[max(3rem,env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
+        <div className="w-32 h-32 bg-[#1CB0F6] rounded-full flex items-center justify-center mb-6 shadow-md border-4 border-white">
+          <User className="w-16 h-16 text-white" />
         </div>
-        <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
-          <div className="flex items-center gap-3">
-            <Check className="w-8 h-8 text-[#58CC02] px-1" strokeWidth={4} />
-            <span className="font-extrabold text-xl text-gray-700">Niveles completados</span>
-          </div>
-          <span className="font-black text-2xl text-[#58CC02]">{progress.length} / 12</span>
-        </div>
-      </div>
+        <h1 className="text-3xl font-black text-gray-800 capitalize">{currentUser}</h1>
+        <p className="text-xl text-gray-500 font-extrabold mt-2 mb-10">¡Sigue esforzándote!</p>
 
-      <div className="w-full max-w-sm mt-auto">
-        <button 
-          onClick={handleLogout}
-          className="w-full bg-white text-[#FF4B4B] border-2 border-[#FF4B4B] rounded-2xl py-5 text-lg font-extrabold uppercase flex items-center justify-center gap-2 active:bg-[#ffdfe0] transition-colors"
-        >
-          <LogOut className="w-6 h-6" /> Cerrar sesión
-        </button>
+        <div className="w-full max-w-sm flex flex-col gap-4">
+          <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
+            <div className="flex items-center gap-3">
+              <Star className="w-8 h-8 text-[#FFC800] fill-current" />
+              <span className="font-extrabold text-xl text-gray-700">Experiencia total</span>
+            </div>
+            <span className="font-black text-2xl text-[#FFC800]">{xp} XP</span>
+          </div>
+          <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
+            <div className="flex items-center gap-3">
+              <Check className="w-8 h-8 text-[#58CC02] px-1" strokeWidth={4} />
+              <span className="font-extrabold text-xl text-gray-700">Niveles (General)</span>
+            </div>
+            <span className="font-black text-2xl text-[#58CC02]">{globalCompleted} / {globalTotal}</span>
+          </div>
+        </div>
+
+        <div className="w-full max-w-sm mt-auto">
+          <button 
+            onClick={handleLogout}
+            className="w-full bg-white text-[#FF4B4B] border-2 border-[#FF4B4B] rounded-2xl py-5 text-lg font-extrabold uppercase flex items-center justify-center gap-2 active:bg-[#ffdfe0] transition-colors touch-manipulation"
+          >
+            <LogOut className="w-6 h-6" /> Cerrar sesión
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="font-sans text-gray-800 bg-white min-h-[100dvh]">
@@ -456,14 +488,14 @@ export default function App() {
         <div className="fixed bottom-0 w-full bg-white border-t-2 border-gray-200 flex justify-around p-3 pb-[max(1rem,env(safe-area-inset-bottom))] z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] pb-safe">
           <button 
             onClick={() => setView('MAP')} 
-            className={`flex flex-col items-center font-extrabold ${view === 'MAP' ? 'text-[#58CC02]' : 'text-gray-400 hover:text-gray-500'}`}
+            className={`flex flex-col items-center font-extrabold pb-1 ${view === 'MAP' ? 'text-[#58CC02]' : 'text-gray-400 hover:text-gray-500'}`}
           >
             <MapIcon className="w-8 h-8 mb-1" strokeWidth={2.5}/>
             <span className="text-[11px] uppercase tracking-wider">Aprender</span>
           </button>
           <button 
             onClick={() => setView('PROFILE')}
-            className={`flex flex-col items-center font-extrabold ${view === 'PROFILE' ? 'text-[#1CB0F6]' : 'text-gray-400 hover:text-gray-500'}`}
+            className={`flex flex-col items-center font-extrabold pb-1 ${view === 'PROFILE' ? 'text-[#1CB0F6]' : 'text-gray-400 hover:text-gray-500'}`}
           >
              <User className="w-8 h-8 mb-1" strokeWidth={2.5}/>
              <span className="text-[11px] uppercase tracking-wider">Perfil</span>
