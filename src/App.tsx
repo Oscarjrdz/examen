@@ -106,9 +106,14 @@ const CatMascot = ({ userName }: { userName: string | null }) => {
   );
 };
 
-const ChestSVG = ({ isOpen, color, darkColor }: { isOpen: boolean, color: string, darkColor: string }) => {
+const ChestSVG = ({ isOpen, color, darkColor, size = "md" }: { isOpen: boolean, color: string, darkColor: string, size?: "md" | "lg" | "xl" }) => {
+  const sizeMap = {
+    md: isOpen ? 'w-24 h-24' : 'w-16 h-16',
+    lg: 'w-24 h-24',
+    xl: 'w-32 h-32'
+  };
   return (
-    <div className={`relative ${isOpen ? 'w-24 h-24' : 'w-16 h-16'} drop-shadow-md`}>
+    <div className={`relative ${sizeMap[size]} drop-shadow-md`}>
        {isOpen && <div className="absolute inset-0 bg-white blur-xl opacity-40 rounded-full animate-pulse z-0"></div>}
        <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
          <path d="M10,45 L15,85 Q50,95 85,85 L90,45 Z" fill={color} stroke={darkColor} strokeWidth="4" strokeLinejoin="round" />
@@ -361,7 +366,9 @@ export default function App() {
         </div>
 
         <div className="flex flex-col items-center mt-6 mb-10 w-full relative z-10 px-2 text-center">
-          <ChestSVG isOpen={true} color={colors.main} darkColor={colors.dark} />
+          <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}>
+            <ChestSVG isOpen={true} color={colors.main} darkColor={colors.dark} size="xl" />
+          </motion.div>
           <h2 className="text-2xl font-black text-gray-800 mt-2 uppercase tracking-tighter drop-shadow-sm leading-tight">{activeSub.title}</h2>
         </div>
 
@@ -435,15 +442,20 @@ export default function App() {
                 
                 return (
                   <div key={t.tier} className="relative flex flex-col items-center w-full" style={{ transform: `translateX(${offset}px)` }}>
-                    <div 
-                      className="w-full max-w-[200px] rounded-[2rem] p-6 border-b-[8px] flex flex-col items-center justify-center relative overflow-hidden text-white"
-                      style={{ backgroundColor: t.main, borderBottomColor: t.dark, boxShadow: `0 6px 0 ${t.shadow}` }}
+                    <motion.div 
+                      animate={{ y: [0, -6, 0] }}
+                      transition={{ repeat: Infinity, duration: 3.5, ease: 'easeInOut' }}
+                      className="flex flex-col items-center justify-center relative z-10 pointer-events-none"
                     >
-                      <div className="absolute inset-0 bg-black/10 z-0"></div>
-                      <ChestSVG isOpen={false} color={t.main} darkColor={t.dark} />
-                      <h3 className="text-xl font-black z-10 uppercase tracking-widest text-center opacity-95 leading-tight mt-2">{t.name}</h3>
-                      <p className="text-sm font-extrabold z-10 opacity-80 mt-1">{t.title}</p>
-                    </div>
+                      <ChestSVG isOpen={false} color={t.main} darkColor={t.dark} size="xl" />
+                      <div className="mt-4 flex flex-col items-center px-4 py-2 rounded-2xl bg-gray-100 border-2 border-gray-200 shadow-sm">
+                        <div className="flex items-center gap-1.5 opacity-80" style={{ color: t.dark }}>
+                           <Lock className="w-4 h-4" strokeWidth={3} />
+                           <h3 className="text-lg font-black uppercase tracking-widest leading-none drop-shadow-sm">{t.name}</h3>
+                        </div>
+                        <p className="text-xs font-extrabold mt-1 opacity-60 uppercase tracking-widest" style={{ color: t.dark }}>{t.title}</p>
+                      </div>
+                    </motion.div>
                     
                     {index < arr.length - 1 && (
                       <svg className="absolute -bottom-16 -z-10" width="100" height="70" style={{ left: isCurveRight ? '50%' : 'auto', right: !isCurveRight ? '50%' : 'auto', transform: isCurveRight ? 'none' : 'scaleX(-1)' }}>
