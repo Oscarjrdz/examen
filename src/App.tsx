@@ -235,8 +235,8 @@ export default function App() {
     const isLastTheory = theoryIndex === activeLevel.theory.length - 1;
 
     return (
-      <div className="min-h-screen bg-white flex flex-col pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="px-5 flex items-center justify-between mb-8 mt-4">
+      <div className="h-[100dvh] w-full bg-white flex flex-col overflow-hidden pt-[max(1rem,env(safe-area-inset-top))]">
+        <div className="px-5 flex items-center justify-between mb-4 mt-2 shrink-0">
           <button onClick={() => setView('MAP')} className="text-gray-400 hover:text-gray-600">
             <X className="w-8 h-8" strokeWidth={3} />
           </button>
@@ -245,27 +245,27 @@ export default function App() {
           </div>
         </div>
         
-        <div className="flex-1 px-6 max-w-2xl mx-auto w-full flex flex-col space-y-6">
-          <h2 className="text-3xl font-extrabold text-gray-800">{activeLevel.title}</h2>
-          <div className="bg-[#1CB0F6]/15 text-[#1CB0F6] font-extrabold p-2 px-4 rounded-xl w-max flex items-center gap-2 uppercase tracking-wide text-sm">
+        <div className="flex-1 px-6 max-w-2xl mx-auto w-full flex flex-col overflow-y-auto pb-6">
+          <h2 className="text-[26px] font-extrabold text-gray-800 mb-4 shrink-0">{activeLevel.title}</h2>
+          <div className="bg-[#1CB0F6]/15 text-[#1CB0F6] font-extrabold p-2 px-4 rounded-xl w-max flex items-center gap-2 uppercase tracking-wide text-sm shrink-0 mb-4">
             <BookOpen className="w-5 h-5"/> Estudiar
           </div>
           
           <AnimatePresence mode="wait">
             <motion.div 
               key={theoryIndex}
-              initial={{ opacity: 0, scale: 0.95 }}
+              initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
+              exit={{ opacity: 0, scale: 0.98 }}
               transition={{ duration: 0.2 }}
-              className="flex-1 text-[22px] text-gray-700 font-semibold leading-relaxed"
+              className="flex-1 text-[20px] text-gray-700 font-semibold leading-relaxed flex flex-col justify-center"
             >
               {activeLevel.theory[theoryIndex]}
             </motion.div>
           </AnimatePresence>
         </div>
 
-        <div className="p-6 border-t-2 border-gray-200 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <div className="p-4 px-6 border-t-2 border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 bg-white z-10 w-full max-w-2xl mx-auto">
           <button 
             className="w-full button-blue rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center gap-2 button-3d"
             onClick={() => {
@@ -312,8 +312,8 @@ export default function App() {
     };
 
     return (
-      <div className="min-h-screen flex flex-col pt-[max(1rem,env(safe-area-inset-top))]">
-        <div className="px-5 flex items-center justify-between mb-8 mt-4">
+      <div className="h-[100dvh] w-full flex flex-col overflow-hidden pt-[max(1rem,env(safe-area-inset-top))]">
+        <div className="px-5 flex items-center justify-between mb-2 mt-2 shrink-0">
           <button onClick={() => setView('MAP')} className="text-gray-400 hover:text-gray-600">
             <X className="w-8 h-8" strokeWidth={3} />
           </button>
@@ -322,17 +322,19 @@ export default function App() {
           </div>
         </div>
 
-        <div className="flex-1 px-6 max-w-2xl mx-auto w-full flex flex-col">
-          <h2 className="text-[26px] font-extrabold text-gray-800 mb-8 leading-snug">{question.question}</h2>
+        <div className="flex-1 px-5 max-w-2xl mx-auto w-full flex flex-col overflow-y-auto pb-6">
+          <div className="flex-1 flex flex-col justify-end">
+             <h2 className="text-[22px] font-extrabold text-gray-800 mb-6 leading-snug">{question.question}</h2>
+          </div>
           
-          <div className="flex flex-col gap-4 flex-1">
+          <div className="flex flex-col gap-3 shrink-0">
             {question.options.map((opt, idx) => (
               <button
                 key={idx}
                 disabled={isAnswerChecked}
                 onClick={() => setSelectedOption(idx)}
                 className={`
-                  p-5 rounded-2xl border-[3px] font-bold text-left text-[19px] transition-all active:scale-95 touch-manipulation
+                  p-4 rounded-xl border-[3px] font-bold text-left text-[17px] transition-all active:scale-95 touch-manipulation
                   ${selectedOption === idx 
                     ? 'border-[#1CB0F6] bg-[#1CB0F6]/10 text-[#1CB0F6]' 
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50 button-3d shadow-sm'
@@ -347,51 +349,53 @@ export default function App() {
           </div>
         </div>
 
-        <div className={`p-6 border-t-2 w-full pb-[max(1.5rem,env(safe-area-inset-bottom))] transition-colors ${
+        <div className={`p-5 border-t-2 w-full shrink-0 pb-[max(1rem,env(safe-area-inset-bottom))] transition-colors ${
           !isAnswerChecked ? 'border-gray-200 bg-white' : 
           isCorrect ? 'border-[#58CC02] bg-[#d7ffb8]' : 'border-[#FF4B4B] bg-[#ffdfe0]'
         }`}>
           {isAnswerChecked && (
-             <div className={`mb-3 font-extrabold text-2xl flex items-center gap-2 ${isCorrect ? 'text-[#58A700]' : 'text-[#EA2B2B]'}`}>
-                {isCorrect ? <><Check className="w-8 h-8" strokeWidth={4}/> ¡Excelente!</> : <><X className="w-8 h-8" strokeWidth={4}/> Incorrecto</>}
+             <div className={`mb-2 font-extrabold text-xl flex items-center gap-2 ${isCorrect ? 'text-[#58A700]' : 'text-[#EA2B2B]'}`}>
+                {isCorrect ? <><Check className="w-7 h-7" strokeWidth={4}/> ¡Excelente!</> : <><X className="w-7 h-7" strokeWidth={4}/> Incorrecto</>}
              </div>
           )}
           {isAnswerChecked && (
-            <p className={`mb-6 font-bold text-lg leading-snug ${isCorrect ? 'text-[#58A700]' : 'text-[#EA2B2B]'}`}>
+            <p className={`mb-4 font-bold text-[16px] leading-snug ${isCorrect ? 'text-[#58A700]' : 'text-[#EA2B2B]'}`}>
               {question.explanation}
             </p>
           )}
 
-          <button 
-            disabled={selectedOption === null && !isAnswerChecked}
-            className={`w-full rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center button-3d touch-manipulation
-              ${selectedOption === null ? 'button-gray cursor-not-allowed opacity-50' : 
-                isAnswerChecked ? (isCorrect ? 'button-green' : 'bg-[#FF4B4B] text-white shadow-[0_4px_0_#EA2B2B]') : 'button-green'
-              }
-            `}
-            onClick={isAnswerChecked ? handleNext : handleCheck}
-          >
-            {isAnswerChecked ? (isCorrect ? 'Continuar' : 'Entendido') : 'Comprobar'}
-          </button>
+          <div className="max-w-2xl mx-auto w-full">
+            <button 
+              disabled={selectedOption === null && !isAnswerChecked}
+              className={`w-full rounded-2xl py-4 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center button-3d touch-manipulation
+                ${selectedOption === null ? 'button-gray cursor-not-allowed opacity-50' : 
+                  isAnswerChecked ? (isCorrect ? 'button-green' : 'bg-[#FF4B4B] text-white shadow-[0_4px_0_#EA2B2B]') : 'button-green'
+                }
+              `}
+              onClick={isAnswerChecked ? handleNext : handleCheck}
+            >
+              {isAnswerChecked ? (isCorrect ? 'Continuar' : 'Entendido') : 'Comprobar'}
+            </button>
+          </div>
         </div>
       </div>
     );
   };
 
   const SuccessView = () => (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)]">
+    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-hidden">
       <motion.div 
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", bounce: 0.5 }}
-        className="w-48 h-48 bg-[#FFC800] rounded-full flex items-center justify-center mb-8 shadow-[0_8px_0_#E6B500]"
+        className="w-40 h-40 bg-[#FFC800] rounded-full flex items-center justify-center mb-8 shadow-[0_8px_0_#E6B500] shrink-0"
       >
-        <Trophy className="w-24 h-24 text-white fill-current" />
+        <Trophy className="w-20 h-20 text-white fill-current" />
       </motion.div>
-      <h1 className="text-4xl font-black text-[#FFC800] mb-4 drop-shadow-sm">¡Nivel Completado!</h1>
-      <p className="text-2xl text-gray-600 font-extrabold mb-12">+15 XP a tu racha.</p>
+      <h1 className="text-4xl font-black text-[#FFC800] mb-4 drop-shadow-sm shrink-0">¡Nivel Completado!</h1>
+      <p className="text-xl text-gray-600 font-extrabold mb-8 shrink-0">+15 XP a tu progreso.</p>
       
-      <div className="w-full mt-auto mb-8 max-w-sm">
+      <div className="w-full mt-auto mb-4 max-w-sm shrink-0">
         <button 
           className="w-full button-green rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase disabled:opacity-50 button-3d touch-manipulation"
           onClick={() => setView('MAP')}
