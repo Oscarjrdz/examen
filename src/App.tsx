@@ -297,10 +297,41 @@ export default function App() {
     const isMastered = activeTier >= 3;
     const colors = getTierColor(activeTier);
 
+    const LOCAL_DICTIONARY: Record<string, string> = {
+      "garza": "Benjamín Garza Olvera es autor del libro 'Estadística y Probabilidad', la bibliografía oficial básica que el CENEVAL exige para el EXANI-II.",
+      "olvera": "Benjamín Garza Olvera es autor del libro 'Estadística y Probabilidad', la bibliografía oficial básica que el CENEVAL exige para el EXANI-II.",
+      "mendenhall": "William Mendenhall es coautor de 'Introducción a la Probabilidad y Estadística', uno de los libros más analíticos y citados por el EXANI-II.",
+      "munch": "Lourdes Münch Galindo es una autora mexicana cuyo libro 'Fundamentos de Administración' es la referencia central obligatoria para el módulo de Administración.",
+      "münch": "Lourdes Münch Galindo es una autora mexicana cuyo libro 'Fundamentos de Administración' es la referencia central obligatoria para el módulo de Administración.",
+      "robbins": "Stephen P. Robbins es el autor del famoso libro 'Administración', usado en todo el mundo y bibliografía oficial del EXANI-II.",
+      "ceneval": "Centro Nacional de Evaluación para la Educación Superior. Diseñan y aplican el EXANI-II a nivel nacional.",
+      "exani": "Examen Nacional de Ingreso a la Educación Superior. Evalúa competencias básicas y módulos de especialidad."
+    };
+
     const handleSearch = async () => {
-      if (!searchQuery.trim()) return;
+      const cleanQuery = searchQuery.trim().toLowerCase();
+      if (!cleanQuery) return;
       setIsSearching(true);
       setSearchResult(null);
+
+      // 1. Verificación local para evitar resultados absurdos de Wikipedia
+      let localMatch = null;
+      for (const [key, definition] of Object.entries(LOCAL_DICTIONARY)) {
+        if (cleanQuery.includes(key)) {
+          localMatch = definition;
+          break;
+        }
+      }
+
+      if (localMatch) {
+         setTimeout(() => {
+           setSearchResult(localMatch);
+           setIsSearching(false);
+         }, 300);
+         return;
+      }
+
+      // 2. Wikipedia fallback for general concepts
       try {
         const searchRes = await fetch(`https://es.wikipedia.org/w/api.php?action=query&origin=*&list=search&srsearch=${encodeURIComponent(searchQuery)}&utf8=&format=json`);
         const searchData = await searchRes.json();
@@ -312,10 +343,10 @@ export default function App() {
           if (summaryData.extract) {
             setSearchResult(summaryData.extract);
           } else {
-            setSearchResult('No se encontró una definición detallada para este concepto.');
+            setSearchResult(`No hay una definición detallada en internet para "${title}".`);
           }
         } else {
-          setSearchResult('No se encontraron resultados en Wikipedia.');
+          setSearchResult('No se encontraron resultados en Wikipedia. Intenta con palabras más generales.');
         }
       } catch (e) {
         setSearchResult('Error al buscar en internet. Revisa tu conexión.');
