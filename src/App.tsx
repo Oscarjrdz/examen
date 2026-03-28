@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { subjects } from './data/syllabus';
 import type { Level } from './data/syllabus';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Star, BookOpen, Brain, Map as MapIcon, Lock, Trophy, User, LogOut } from 'lucide-react';
+import { Check, X, Star, BookOpen, Brain, Map as MapIcon, Lock, Trophy, User, LogOut, Search, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 type ViewState = 'LOGIN' | 'MAP' | 'THEORY' | 'QUIZ' | 'SUCCESS' | 'PROFILE';
@@ -256,8 +256,39 @@ export default function App() {
   };
 
   const TheoryView = () => {
+    const [searchQuery, setSearchQuery] = useState('');
+    const [searchResult, setSearchResult] = useState<string | null>(null);
+    const [isSearching, setIsSearching] = useState(false);
+
     if (!activeLevel) return null;
     const isLastTheory = theoryIndex === activeLevel.theory.length - 1;
+
+    const handleSearch = async () => {
+      if (!searchQuery.trim()) return;
+      setIsSearching(true);
+      setSearchResult(null);
+      try {
+        const searchRes = await fetch(`https://es.wikipedia.org/w/api.php?action=query&origin=*&list=search&srsearch=${encodeURIComponent(searchQuery)}&utf8=&format=json`);
+        const searchData = await searchRes.json();
+        
+        if (searchData.query && searchData.query.search.length > 0) {
+          const title = searchData.query.search[0].title;
+          const summaryRes = await fetch(`https://es.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}?redirect=true`);
+          const summaryData = await summaryRes.json();
+          if (summaryData.extract) {
+            setSearchResult(summaryData.extract);
+          } else {
+            setSearchResult('No se encontró una definición detallada para este concepto.');
+          }
+        } else {
+          setSearchResult('No se encontraron resultados en Wikipedia.');
+        }
+      } catch (e) {
+        setSearchResult('Error al buscar en internet. Revisa tu conexión.');
+      } finally {
+        setIsSearching(false);
+      }
+    };
 
     return (
       <div className="h-[100dvh] w-full bg-white flex flex-col overflow-hidden pt-[max(1rem,env(safe-area-inset-top))]">
@@ -288,6 +319,42 @@ export default function App() {
               {activeLevel.theory[theoryIndex]}
             </motion.div>
           </AnimatePresence>
+
+          <div className="mt-8 mb-4 border-2 border-[#1CB0F6]/30 rounded-2xl p-4 bg-[#1CB0F6]/5 shrink-0">
+            <h3 className="font-extrabold text-[#1CB0F6] mb-3 flex items-center gap-2">
+              <Search className="w-5 h-5" strokeWidth={3} /> Saber más
+            </h3>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                placeholder="Busca un concepto en internet..." 
+                className="flex-1 p-3 rounded-xl border-2 border-[#1CB0F6]/30 outline-none focus:border-[#1CB0F6] font-bold text-gray-700 text-sm bg-white"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSearch()}
+              />
+              <button 
+                onClick={handleSearch}
+                disabled={isSearching}
+                className="bg-[#1CB0F6] text-white px-4 py-3 rounded-xl font-extrabold active:scale-95 transition-transform flex items-center justify-center shrink-0"
+              >
+                {isSearching ? <Loader2 className="w-5 h-5 animate-spin"/> : 'Buscar'}
+              </button>
+            </div>
+            
+            <AnimatePresence>
+              {searchResult && (
+                <motion.div 
+                  initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                  animate={{ opacity: 1, height: 'auto', marginTop: 16 }}
+                  exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                  className="p-4 bg-white rounded-xl border-2 border-gray-200 text-gray-600 text-sm font-semibold leading-relaxed overflow-hidden"
+                >
+                  {searchResult}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
 
         <div className="p-4 px-6 border-t-2 border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 bg-white z-10 w-full max-w-2xl mx-auto">
@@ -298,6 +365,8 @@ export default function App() {
                 setView('QUIZ');
               } else {
                 setTheoryIndex(theoryIndex + 1);
+                setSearchQuery('');
+                setSearchResult(null);
               }
             }}
           >
