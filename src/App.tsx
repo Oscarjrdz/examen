@@ -2,29 +2,64 @@ import { useState, useEffect } from 'react';
 import { syllabus } from './data/syllabus';
 import type { Level } from './data/syllabus';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, X, Star, BookOpen, Brain, Map as MapIcon, Lock, Trophy } from 'lucide-react';
+import { Check, X, Star, BookOpen, Brain, Map as MapIcon, Lock, Trophy, User, LogOut } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
-type ViewState = 'MAP' | 'THEORY' | 'QUIZ' | 'SUCCESS';
+type ViewState = 'LOGIN' | 'MAP' | 'THEORY' | 'QUIZ' | 'SUCCESS' | 'PROFILE';
+
+type UserData = {
+  password: string;
+  xp: number;
+  progress: number[];
+};
 
 export default function App() {
-  const [view, setView] = useState<ViewState>('MAP');
-  const [activeLevel, setActiveLevel] = useState<Level | null>(null);
-  const [progress, setProgress] = useState<number[]>(() => {
-    const saved = localStorage.getItem('exani_progress');
-    return saved ? JSON.parse(saved) : [];
-  });
-  const [xp, setXp] = useState<number>(() => {
-    const saved = localStorage.getItem('exani_xp');
-    return saved ? parseInt(saved, 10) : 0;
-  });
+  const [view, setView] = useState<ViewState>('LOGIN');
+  const [currentUser, setCurrentUser] = useState<string | null>(null);
+  
+  // App State tied to User
+  const [progress, setProgress] = useState<number[]>([]);
+  const [xp, setXp] = useState<number>(0);
 
+  // Load user session on mount
   useEffect(() => {
-    localStorage.setItem('exani_progress', JSON.stringify(progress));
-    localStorage.setItem('exani_xp', xp.toString());
-  }, [progress, xp]);
+    const activeSession = sessionStorage.getItem('exani_active_user');
+    if (activeSession) {
+      loadUserData(activeSession);
+    }
+  }, []);
 
-  // Quiz state
+  // Save changes to localStorage whenever progress/xp changes and user is logged in
+  useEffect(() => {
+    if (currentUser) {
+      const usersRaw = localStorage.getItem('exani_users');
+      const users: Record<string, UserData> = usersRaw ? JSON.parse(usersRaw) : {};
+      users[currentUser] = { ...users[currentUser], xp, progress };
+      localStorage.setItem('exani_users', JSON.stringify(users));
+    }
+  }, [progress, xp, currentUser]);
+
+  const loadUserData = (username: string) => {
+    const usersRaw = localStorage.getItem('exani_users');
+    const users: Record<string, UserData> = usersRaw ? JSON.parse(usersRaw) : {};
+    
+    setCurrentUser(username);
+    setXp(users[username]?.xp || 0);
+    setProgress(users[username]?.progress || []);
+    setView('MAP');
+    sessionStorage.setItem('exani_active_user', username);
+  };
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setXp(0);
+    setProgress([]);
+    sessionStorage.removeItem('exani_active_user');
+    setView('LOGIN');
+  };
+
+  // Quiz & Theory State
+  const [activeLevel, setActiveLevel] = useState<Level | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
@@ -51,6 +86,72 @@ export default function App() {
       colors: ['#58CC02', '#FFC800', '#1CB0F6']
     });
     setView('SUCCESS');
+  };
+
+  // ---------------- Views ----------------
+
+  const LoginView = () => {
+    const [name, setName] = useState('');
+    const [pwd, setPwd] = useState('');
+    const [errorMsg, setErrorMsg] = useState('');
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      const username = name.trim().toLowerCase();
+      if (!username || !pwd) {
+        setErrorMsg('Llena ambos campos por favor.');
+        return;
+      }
+      
+      const usersRaw = localStorage.getItem('exani_users');
+      const users: Record<string, UserData> = usersRaw ? JSON.parse(usersRaw) : {};
+
+      if (users[username]) {
+        // Exists, check password
+        if (users[username].password === pwd) {
+          loadUserData(username);
+        } else {
+          setErrorMsg('Contraseña incorrecta.');
+        }
+      } else {
+        // Create new
+        users[username] = { password: pwd, xp: 0, progress: [] };
+        localStorage.setItem('exani_users', JSON.stringify(users));
+        loadUserData(username);
+      }
+    };
+
+    return (
+      <div className="min-h-[100dvh] bg-white flex flex-col items-center justify-center p-6 text-center">
+        <Brain className="w-24 h-24 text-[#58CC02] mb-6" />
+        <h1 className="text-3xl font-extrabold text-gray-800 mb-2">Exani-Prep</h1>
+        <p className="text-gray-500 font-bold mb-10">Ingresa o crea tu perfil para guardar tu récord</p>
+        
+        <form onSubmit={handleSubmit} className="w-full max-w-sm flex flex-col gap-4">
+          <input 
+            type="text" 
+            placeholder="Tu nombre (Ej: Oscar)" 
+            className="w-full p-4 rounded-xl border-2 border-gray-200 outline-none focus:border-[#1CB0F6] font-bold text-gray-700 text-lg transition-colors"
+            value={name}
+            onChange={e => {setName(e.target.value); setErrorMsg('');}}
+            maxLength={15}
+          />
+          <input 
+            type="password" 
+            placeholder="Contraseña sencilla" 
+            className="w-full p-4 rounded-xl border-2 border-gray-200 outline-none focus:border-[#1CB0F6] font-bold text-gray-700 text-lg transition-colors"
+            value={pwd}
+            onChange={e => {setPwd(e.target.value); setErrorMsg('');}}
+          />
+          
+          {errorMsg && <p className="text-[#FF4B4B] font-bold text-sm text-left px-2">{errorMsg}</p>}
+          
+          <button type="submit" className="w-full button-green rounded-2xl py-4 mt-4 text-xl tracking-widest font-extrabold uppercase button-3d touch-manipulation">
+            Entrar
+          </button>
+        </form>
+      </div>
+    );
   };
 
   const TopBar = () => (
@@ -301,23 +402,67 @@ export default function App() {
     </div>
   );
 
+  const ProfileView = () => (
+    <div className="min-h-screen flex flex-col items-center p-6 pt-[max(3rem,env(safe-area-inset-top))] pb-[env(safe-area-inset-bottom)]">
+      <div className="w-32 h-32 bg-[#1CB0F6] rounded-full flex items-center justify-center mb-6 shadow-md border-4 border-white">
+        <User className="w-16 h-16 text-white" />
+      </div>
+      <h1 className="text-3xl font-black text-gray-800 capitalize">{currentUser}</h1>
+      <p className="text-xl text-gray-500 font-extrabold mt-2 mb-10">¡Sigue esforzándote!</p>
+
+      <div className="w-full max-w-sm flex flex-col gap-4">
+        <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
+          <div className="flex items-center gap-3">
+            <Star className="w-8 h-8 text-[#FFC800] fill-current" />
+            <span className="font-extrabold text-xl text-gray-700">Experiencia</span>
+          </div>
+          <span className="font-black text-2xl text-[#FFC800]">{xp} XP</span>
+        </div>
+        <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
+          <div className="flex items-center gap-3">
+            <Check className="w-8 h-8 text-[#58CC02] px-1" strokeWidth={4} />
+            <span className="font-extrabold text-xl text-gray-700">Niveles completados</span>
+          </div>
+          <span className="font-black text-2xl text-[#58CC02]">{progress.length} / 12</span>
+        </div>
+      </div>
+
+      <div className="w-full max-w-sm mt-auto">
+        <button 
+          onClick={handleLogout}
+          className="w-full bg-white text-[#FF4B4B] border-2 border-[#FF4B4B] rounded-2xl py-5 text-lg font-extrabold uppercase flex items-center justify-center gap-2 active:bg-[#ffdfe0] transition-colors"
+        >
+          <LogOut className="w-6 h-6" /> Cerrar sesión
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div className="font-sans text-gray-800 bg-white min-h-[100dvh]">
-      {view === 'MAP' && <TopBar />}
+      {view === 'LOGIN' && <LoginView />}
+      {(view === 'MAP' || view === 'PROFILE') && <TopBar />}
       {view === 'MAP' && <MapView />}
       {view === 'THEORY' && <TheoryView />}
       {view === 'QUIZ' && <QuizView />}
       {view === 'SUCCESS' && <SuccessView />}
+      {view === 'PROFILE' && <ProfileView />}
 
-      {view === 'MAP' && (
+      {(view === 'MAP' || view === 'PROFILE') && (
         <div className="fixed bottom-0 w-full bg-white border-t-2 border-gray-200 flex justify-around p-3 pb-[max(1rem,env(safe-area-inset-bottom))] z-50 shadow-[0_-4px_15px_rgba(0,0,0,0.03)] pb-safe">
-          <button className="flex flex-col items-center text-[#58CC02] font-extrabold">
+          <button 
+            onClick={() => setView('MAP')} 
+            className={`flex flex-col items-center font-extrabold ${view === 'MAP' ? 'text-[#58CC02]' : 'text-gray-400 hover:text-gray-500'}`}
+          >
             <MapIcon className="w-8 h-8 mb-1" strokeWidth={2.5}/>
             <span className="text-[11px] uppercase tracking-wider">Aprender</span>
           </button>
-          <button className="flex flex-col items-center text-gray-400 font-extrabold hover:text-gray-500">
-             <Trophy className="w-8 h-8 mb-1" strokeWidth={2.5}/>
-             <span className="text-[11px] uppercase tracking-wider">Posiciones</span>
+          <button 
+            onClick={() => setView('PROFILE')}
+            className={`flex flex-col items-center font-extrabold ${view === 'PROFILE' ? 'text-[#1CB0F6]' : 'text-gray-400 hover:text-gray-500'}`}
+          >
+             <User className="w-8 h-8 mb-1" strokeWidth={2.5}/>
+             <span className="text-[11px] uppercase tracking-wider">Perfil</span>
           </button>
         </div>
       )}
