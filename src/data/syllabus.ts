@@ -23,6 +23,8 @@ export type Subject = {
   levels: Level[];
 };
 
+import { transversales } from './syllabus-transversales';
+
 export const subjects: Subject[] = [
   {
     id: "probabilidad",
@@ -541,5 +543,6 @@ export const subjects: Subject[] = [
         ]
       }
     ]
-  }
+  },
+  ...transversales
 ];
