@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { subjects } from './data/syllabus';
-import type { Level } from './data/syllabus';
+import type { Level, QuizQuestion } from './data/syllabus';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, X, Star, BookOpen, Brain, Map as MapIcon, Lock, Trophy, User, LogOut, Search, Loader2 } from 'lucide-react';
 import confetti from 'canvas-confetti';
@@ -10,7 +10,17 @@ type ViewState = 'LOGIN' | 'MAP' | 'THEORY' | 'QUIZ' | 'SUCCESS' | 'PROFILE';
 type UserData = {
   password: string;
   xp: number;
-  progress: Record<string, number[]>;
+  progress: Record<string, Record<number, number>>; // { subjectId: { levelId: tier (0-3) } }
+};
+
+const getTierColor = (tier: number) => {
+  switch (tier) {
+    case 0: return { main: '#58CC02', dark: '#58A700', shadow: 'rgba(88,204,2,0.2)', name: 'Verde' };     // Green
+    case 1: return { main: '#FF9600', dark: '#CC7800', shadow: 'rgba(255,150,0,0.2)', name: 'Naranja' };  // Orange
+    case 2: return { main: '#CE82FF', dark: '#A568CC', shadow: 'rgba(206,130,255,0.2)', name: 'Morado' };  // Purple
+    case 3: return { main: '#FFC800', dark: '#E6B500', shadow: 'rgba(255,200,0,0.2)', name: 'Maestro' };   // Gold
+    default: return { main: '#58CC02', dark: '#58A700', shadow: 'rgba(88,204,2,0.2)', name: 'Verde' };
+  }
 };
 
 export default function App() {
@@ -18,7 +28,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<string | null>(null);
   
   // App State tied to User
-  const [progress, setProgress] = useState<Record<string, number[]>>({});
+  const [progress, setProgress] = useState<Record<string, Record<number, number>>>({});
   const [xp, setXp] = useState<number>(0);
   const [activeSubjectId, setActiveSubjectId] = useState<string>(subjects[0].id);
 
@@ -30,7 +40,7 @@ export default function App() {
     }
   }, []);
 
-  // Save changes to localStorage whenever progress/xp changes and user is logged in
+  // Save changes to localStorage
   useEffect(() => {
     if (currentUser) {
       const usersRaw = localStorage.getItem('exani_users');
@@ -48,12 +58,22 @@ export default function App() {
     setXp(users[username]?.xp || 0);
     
     let loadedProgress = users[username]?.progress || {};
-    // Retro-compatibility migration if older user format
-    if (Array.isArray(loadedProgress)) {
-      loadedProgress = { "probabilidad": loadedProgress };
-    }
+    let migratedProgress: Record<string, Record<number, number>> = {};
     
-    setProgress(loadedProgress);
+    // Migration from number[] to Record<number, number>
+    Object.keys(loadedProgress).forEach(subj => {
+      const p = loadedProgress[subj];
+      if (Array.isArray(p)) {
+        migratedProgress[subj] = {};
+        p.forEach(nodeId => {
+          migratedProgress[subj][nodeId] = 1; // Mark as finished green (Tier 1)
+        });
+      } else {
+        migratedProgress[subj] = p as any;
+      }
+    });
+    
+    setProgress(migratedProgress);
     setView('MAP');
     sessionStorage.setItem('exani_active_user', username);
   };
@@ -68,13 +88,15 @@ export default function App() {
 
   // Quiz & Theory State
   const [activeLevel, setActiveLevel] = useState<Level | null>(null);
+  const [activeTier, setActiveTier] = useState<number>(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isAnswerChecked, setIsAnswerChecked] = useState(false);
   const [theoryIndex, setTheoryIndex] = useState(0);
 
-  const startLevel = (level: Level) => {
+  const startLevel = (level: Level, tier: number) => {
     setActiveLevel(level);
+    setActiveTier(tier);
     setTheoryIndex(0);
     setCurrentQuestionIndex(0);
     setSelectedOption(null);
@@ -83,19 +105,27 @@ export default function App() {
   };
 
   const handleLevelComplete = () => {
-    const pList = progress[activeSubjectId] || [];
-    if (activeLevel && !pList.includes(activeLevel.id)) {
+    const pList = progress[activeSubjectId] || {};
+    const currentTierForNode = pList[activeLevel!.id] || 0;
+    
+    if (activeTier === currentTierForNode && currentTierForNode < 3) {
       setProgress({
         ...progress,
-        [activeSubjectId]: [...pList, activeLevel.id]
+        [activeSubjectId]: {
+          ...pList,
+          [activeLevel!.id]: currentTierForNode + 1
+        }
       });
       setXp(xp + 15);
+    } else if (activeTier === 3) {
+      setXp(xp + 5); // Just 5 points for reviewing a mastered node
     }
+
     confetti({
       particleCount: 150,
       spread: 70,
       origin: { y: 0.6 },
-      colors: ['#58CC02', '#FFC800', '#1CB0F6']
+      colors: ['#58CC02', '#FFC800', '#1CB0F6', '#CE82FF']
     });
     setView('SUCCESS');
   };
@@ -179,7 +209,7 @@ export default function App() {
 
   const MapView = () => {
     const activeSub = subjects.find(s => s.id === activeSubjectId)!;
-    const currentProgress = progress[activeSubjectId] || [];
+    const currentProgress = progress[activeSubjectId] || {};
 
     return (
       <div className="pb-32 px-4 max-w-md mx-auto flex flex-col items-center w-full">
@@ -205,40 +235,42 @@ export default function App() {
 
         <div className="flex flex-col items-center gap-8 relative w-full pt-4">
           {activeSub.levels.map((lvl, idx) => {
-            const isCompleted = currentProgress.includes(lvl.id);
-            const isUnlocked = idx === 0 || currentProgress.includes(activeSub.levels[idx - 1].id);
+            const nodeTier = currentProgress[lvl.id] || 0;
+            const isUnlocked = idx === 0 || (currentProgress[activeSub.levels[idx - 1].id] || 0) >= 1;
+            const isMastered = nodeTier >= 3;
             
             const offset = Math.sin(idx * 0.8) * 50;
             const nextOffset = idx < activeSub.levels.length - 1 ? Math.sin((idx + 1) * 0.8) * 50 : 0;
             const dx = nextOffset - offset;
             const isCurveRight = dx > 0;
             
+            const colors = getTierColor(nodeTier);
+
             return (
               <div key={lvl.id} className="relative flex flex-col items-center" style={{ transform: `translateX(${offset}px)` }}>
-                {idx === 0 && !isCompleted && (
-                  <motion.div animate={{y: [0, -10, 0]}} transition={{repeat: Infinity, duration: 2}} className="absolute -top-12 bg-white px-4 py-2 rounded-2xl border-2 border-gray-200 font-bold text-gray-600 shadow-sm z-20 tooltip">
-                    ¡Comienza aquí!
+                {isUnlocked && !isMastered && (
+                  <motion.div animate={{y: [0, -10, 0]}} transition={{repeat: Infinity, duration: 2}} className="absolute -top-12 bg-white px-4 py-2 rounded-2xl border-2 border-gray-200 font-bold text-gray-600 shadow-sm z-20 tooltip text-sm flex gap-1 items-center">
+                    {!isMastered && <span className="w-2 h-2 rounded-full block" style={{backgroundColor: colors.main}}></span>}
+                    {nodeTier === 0 ? 'Fase Verde' : nodeTier === 1 ? 'Media Naranja' : 'Avanzado Morado'}
                     <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 w-4 h-4 bg-white border-b-2 border-r-2 border-gray-200 rotate-45"></div>
                   </motion.div>
                 )}
                 
                 <button
-                  onClick={() => isUnlocked && startLevel(lvl)}
+                  onClick={() => isUnlocked && startLevel(lvl, nodeTier)}
                   disabled={!isUnlocked}
                   className={`
                     w-24 h-24 rounded-full flex items-center justify-center transform transition-all active:scale-95 z-10
-                    ${isUnlocked ? 'cursor-pointer' : 'cursor-not-allowed opacity-60'}
-                    ${isCompleted ? 'bg-[#58CC02] border-b-[8px] border-[#58A700]' : 
-                      isUnlocked ? 'bg-[#1CB0F6] border-b-[8px] border-[#1899D6] shadow-[0_0_0_8px_rgba(28,176,246,0.2)]' : 
-                      'bg-gray-300 border-b-[8px] border-gray-400'}
+                    ${isUnlocked ? 'cursor-pointer' : 'cursor-not-allowed opacity-60 bg-gray-300 border-b-[8px] border-gray-400'}
                   `}
+                  style={isUnlocked ? { backgroundColor: colors.main, borderBottom: `8px solid ${colors.dark}`, boxShadow: `0 0 0 8px ${colors.shadow}` } : {}}
                 >
-                  {isCompleted ? <Check className="w-12 h-12 text-white" strokeWidth={4} /> : 
-                   isUnlocked ? <Star className="w-12 h-12 text-white fill-current" /> : 
-                   <Lock className="w-10 h-10 text-gray-500" strokeWidth={2.5} />}
+                  {!isUnlocked ? <Lock className="w-10 h-10 text-gray-500" strokeWidth={2.5} /> : 
+                   isMastered ? <Trophy className="w-11 h-11 text-white fill-current" /> : 
+                   <Star className="w-11 h-11 text-white fill-current" />}
                 </button>
                 
-                <div className="mt-3 font-extrabold text-gray-700 text-center max-w-[130px] text-[15px] leading-tight flex-col hidden sm:flex">
+                <div className="mt-4 font-extrabold text-gray-700 text-center max-w-[130px] text-[15px] leading-tight flex-col hidden sm:flex">
                   {lvl.title}
                 </div>
 
@@ -262,6 +294,8 @@ export default function App() {
 
     if (!activeLevel) return null;
     const isLastTheory = theoryIndex === activeLevel.theory.length - 1;
+    const isMastered = activeTier >= 3;
+    const colors = getTierColor(activeTier);
 
     const handleSearch = async () => {
       if (!searchQuery.trim()) return;
@@ -297,14 +331,16 @@ export default function App() {
             <X className="w-8 h-8" strokeWidth={3} />
           </button>
           <div className="flex-1 mx-5 h-4 bg-gray-200 rounded-full overflow-hidden">
-             <div className="h-full bg-[#1CB0F6] transition-all duration-300" style={{ width: `${((theoryIndex) / activeLevel.theory.length) * 100}%` }}></div>
+             <div className="h-full transition-all duration-300" style={{ width: `${((theoryIndex) / activeLevel.theory.length) * 100}%`, backgroundColor: colors.main }}></div>
           </div>
         </div>
         
         <div className="flex-1 px-6 max-w-2xl mx-auto w-full flex flex-col overflow-y-auto pb-6">
           <h2 className="text-[26px] font-extrabold text-gray-800 mb-4 shrink-0">{activeLevel.title}</h2>
-          <div className="bg-[#1CB0F6]/15 text-[#1CB0F6] font-extrabold p-2 px-4 rounded-xl w-max flex items-center gap-2 uppercase tracking-wide text-sm shrink-0 mb-4">
-            <BookOpen className="w-5 h-5"/> Estudiar
+          
+          <div className="font-extrabold p-2 px-4 rounded-xl w-max flex items-center gap-2 uppercase tracking-wide text-sm shrink-0 mb-4" style={{ backgroundColor: colors.shadow, color: colors.dark }}>
+            {isMastered ? <Trophy className="w-5 h-5"/> : <BookOpen className="w-5 h-5"/>} 
+            {isMastered ? 'Repaso Maestro' : `Lección ${colors.name}`}
           </div>
           
           <AnimatePresence mode="wait">
@@ -320,15 +356,16 @@ export default function App() {
             </motion.div>
           </AnimatePresence>
 
-          <div className="mt-8 mb-4 border-2 border-[#1CB0F6]/30 rounded-2xl p-4 bg-[#1CB0F6]/5 shrink-0">
-            <h3 className="font-extrabold text-[#1CB0F6] mb-3 flex items-center gap-2">
+          <div className="mt-8 mb-4 border-2 rounded-2xl p-4 shrink-0" style={{ borderColor: colors.shadow, backgroundColor: colors.shadow }}>
+            <h3 className="font-extrabold mb-3 flex items-center gap-2" style={{ color: colors.dark }}>
               <Search className="w-5 h-5" strokeWidth={3} /> Saber más
             </h3>
             <div className="flex gap-2">
               <input 
                 type="text" 
                 placeholder="Busca un concepto en internet..." 
-                className="flex-1 p-3 rounded-xl border-2 border-[#1CB0F6]/30 outline-none focus:border-[#1CB0F6] font-bold text-gray-700 text-sm bg-white"
+                className="flex-1 p-3 rounded-xl border-2 outline-none font-bold text-gray-700 text-sm bg-white"
+                style={{ borderColor: colors.shadow }}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && handleSearch()}
@@ -336,7 +373,8 @@ export default function App() {
               <button 
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="bg-[#1CB0F6] text-white px-4 py-3 rounded-xl font-extrabold active:scale-95 transition-transform flex items-center justify-center shrink-0"
+                className="text-white px-4 py-3 rounded-xl font-extrabold active:scale-95 transition-transform flex items-center justify-center shrink-0"
+                style={{ backgroundColor: colors.main }}
               >
                 {isSearching ? <Loader2 className="w-5 h-5 animate-spin"/> : 'Buscar'}
               </button>
@@ -359,7 +397,8 @@ export default function App() {
 
         <div className="p-4 px-6 border-t-2 border-gray-200 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 bg-white z-10 w-full max-w-2xl mx-auto">
           <button 
-            className="w-full button-blue rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center gap-2 button-3d touch-manipulation"
+            className="w-full rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center gap-2 button-3d touch-manipulation text-white"
+            style={{ backgroundColor: colors.main, boxShadow: `0 4px 0 ${colors.dark}` }}
             onClick={() => {
               if (isLastTheory) {
                 setView('QUIZ');
@@ -379,11 +418,19 @@ export default function App() {
 
   const QuizView = () => {
     if (!activeLevel) return null;
-    const question = activeLevel.quiz[currentQuestionIndex];
+    
+    // Choose quiz bank depending on activeTier
+    // Tier 0: Green, Tier 1: Orange, Tier 2: Purple, Tier 3: Gold (re-use Purple)
+    let activeQuizArray: QuizQuestion[] = activeLevel.quiz;
+    if (activeTier === 1 && activeLevel.quizOrange && activeLevel.quizOrange.length > 0) activeQuizArray = activeLevel.quizOrange;
+    if (activeTier >= 2 && activeLevel.quizPurple && activeLevel.quizPurple.length > 0) activeQuizArray = activeLevel.quizPurple;
+    
+    const colors = getTierColor(activeTier);
+    const question = activeQuizArray[currentQuestionIndex] || activeLevel.quiz[0]; // fallback to logic
     if (!question) return null;
 
     const isCorrect = selectedOption === question.correctAnswer;
-    const isLastQuestion = currentQuestionIndex === activeLevel.quiz.length - 1;
+    const isLastQuestion = currentQuestionIndex === activeQuizArray.length - 1;
 
     const handleCheck = () => {
       if (selectedOption === null) return;
@@ -412,7 +459,7 @@ export default function App() {
             <X className="w-8 h-8" strokeWidth={3} />
           </button>
           <div className="flex-1 mx-5 h-4 bg-gray-200 rounded-full overflow-hidden">
-             <div className="h-full bg-[#58CC02] transition-all duration-300" style={{ width: `${((currentQuestionIndex) / activeLevel.quiz.length) * 100}%` }}></div>
+             <div className="h-full transition-all duration-300" style={{ width: `${((currentQuestionIndex) / activeQuizArray.length) * 100}%`, backgroundColor: colors.main }}></div>
           </div>
         </div>
 
@@ -422,24 +469,27 @@ export default function App() {
           </div>
           
           <div className="flex flex-col gap-3 shrink-0">
-            {question.options.map((opt, idx) => (
-              <button
-                key={idx}
-                disabled={isAnswerChecked}
-                onClick={() => setSelectedOption(idx)}
-                className={`
-                  p-4 rounded-xl border-[3px] font-bold text-left text-[17px] transition-all active:scale-95 touch-manipulation
-                  ${selectedOption === idx 
-                    ? 'border-[#1CB0F6] bg-[#1CB0F6]/10 text-[#1CB0F6]' 
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50 button-3d shadow-sm'
-                  }
-                  ${isAnswerChecked && idx === question.correctAnswer ? '!border-[#58CC02] !bg-[#58CC02]/10 !text-[#58CC02]' : ''}
-                  ${isAnswerChecked && selectedOption === idx && idx !== question.correctAnswer ? '!border-[#FF4B4B] !bg-[#FF4B4B]/10 !text-[#FF4B4B]' : ''}
-                `}
-              >
-                {opt}
-              </button>
-            ))}
+            {question.options.map((opt, idx) => {
+               const isSelected = selectedOption === idx;
+               const isRightAnswerAnalyzed = isAnswerChecked && idx === question.correctAnswer;
+               const isWrongAnswerAnalyzed = isAnswerChecked && isSelected && idx !== question.correctAnswer;
+
+               return (
+                  <button
+                    key={idx}
+                    disabled={isAnswerChecked}
+                    onClick={() => setSelectedOption(idx)}
+                    className={`p-4 rounded-xl border-[3px] font-bold text-left text-[17px] transition-all active:scale-95 touch-manipulation button-3d shadow-sm
+                      ${isSelected && !isAnswerChecked ? `bg-opacity-10 text-[${colors.dark}]` : 'border-gray-200 text-gray-600 hover:bg-gray-50'}
+                      ${isRightAnswerAnalyzed ? '!border-[#58CC02] !bg-[#58CC02]/10 !text-[#58CC02]' : ''}
+                      ${isWrongAnswerAnalyzed ? '!border-[#FF4B4B] !bg-[#FF4B4B]/10 !text-[#FF4B4B]' : ''}
+                    `}
+                    style={isSelected && !isAnswerChecked ? { borderColor: colors.main, backgroundColor: colors.shadow, color: colors.dark } : {}}
+                  >
+                    {opt}
+                  </button>
+               )
+            })}
           </div>
         </div>
 
@@ -461,11 +511,12 @@ export default function App() {
           <div className="max-w-2xl mx-auto w-full">
             <button 
               disabled={selectedOption === null && !isAnswerChecked}
-              className={`w-full rounded-2xl py-4 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center button-3d touch-manipulation
-                ${selectedOption === null ? 'button-gray cursor-not-allowed opacity-50' : 
-                  isAnswerChecked ? (isCorrect ? 'button-green' : 'bg-[#FF4B4B] text-white shadow-[0_4px_0_#EA2B2B]') : 'button-green'
+              className={`w-full rounded-2xl py-4 text-xl tracking-widest font-extrabold uppercase flex items-center justify-center button-3d touch-manipulation text-white
+                ${selectedOption === null ? 'bg-[#e5e5e5] !text-[#a0a0a0] !shadow-[0_4px_0_#d0d0d0] cursor-not-allowed opacity-50' : 
+                  isAnswerChecked ? (isCorrect ? 'button-green' : 'bg-[#FF4B4B] shadow-[0_4px_0_#EA2B2B]') : ''
                 }
               `}
+              style={selectedOption !== null && !isAnswerChecked ? { backgroundColor: colors.main, boxShadow: `0 4px 0 ${colors.dark}` } : {}}
               onClick={isAnswerChecked ? handleNext : handleCheck}
             >
               {isAnswerChecked ? (isCorrect ? 'Continuar' : 'Entendido') : 'Comprobar'}
@@ -476,34 +527,43 @@ export default function App() {
     );
   };
 
-  const SuccessView = () => (
-    <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-hidden">
-      <motion.div 
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ type: "spring", bounce: 0.5 }}
-        className="w-40 h-40 bg-[#FFC800] rounded-full flex items-center justify-center mb-8 shadow-[0_8px_0_#E6B500] shrink-0"
-      >
-        <Trophy className="w-20 h-20 text-white fill-current" />
-      </motion.div>
-      <h1 className="text-4xl font-black text-[#FFC800] mb-4 drop-shadow-sm shrink-0">¡Nivel Completado!</h1>
-      <p className="text-xl text-gray-600 font-extrabold mb-8 shrink-0">+15 XP a tu progreso.</p>
-      
-      <div className="w-full mt-auto mb-4 max-w-sm shrink-0">
-        <button 
-          className="w-full button-green rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase disabled:opacity-50 button-3d touch-manipulation"
-          onClick={() => setView('MAP')}
+  const SuccessView = () => {
+    const colors = getTierColor(activeTier);
+    return (
+      <div className="h-[100dvh] w-full flex flex-col items-center justify-center p-6 text-center pt-[env(safe-area-inset-top)] pb-[env(safe-area-inset-bottom)] overflow-hidden">
+        <motion.div 
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", bounce: 0.5 }}
+          className="w-40 h-40 rounded-full flex items-center justify-center mb-8 shrink-0"
+          style={{ backgroundColor: colors.main, boxShadow: `0 8px 0 ${colors.dark}` }}
         >
-          Continuar
-        </button>
+          {activeTier >= 3 ? <Trophy className="w-20 h-20 text-white fill-current" /> : <Star className="w-20 h-20 text-white fill-current"/>}
+        </motion.div>
+        <h1 className="text-4xl font-black mb-4 drop-shadow-sm shrink-0" style={{ color: colors.dark }}>¡Nivel Completado!</h1>
+        <p className="text-xl text-gray-600 font-extrabold mb-8 shrink-0">+{activeTier >= 3 ? 5 : 15} XP a tu progreso.</p>
+        
+        <div className="w-full mt-auto mb-4 max-w-sm shrink-0">
+          <button 
+            className="w-full text-white rounded-2xl py-5 text-xl tracking-widest font-extrabold uppercase disabled:opacity-50 button-3d touch-manipulation"
+            style={{ backgroundColor: colors.main, boxShadow: `0 4px 0 ${colors.dark}` }}
+            onClick={() => setView('MAP')}
+          >
+            Continuar
+          </button>
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   const ProfileView = () => {
     let globalCompleted = 0;
     let globalTotal = 0;
-    Object.values(progress).forEach(arr => globalCompleted += arr.length);
+    Object.values(progress).forEach(subjObj => {
+      Object.values(subjObj).forEach(tier => {
+        if (tier > 0) globalCompleted++; // finished at least green
+      });
+    });
     subjects.forEach(sub => globalTotal += sub.levels.length);
 
     return (
@@ -525,7 +585,7 @@ export default function App() {
           <div className="flex items-center justify-between bg-white p-5 rounded-2xl border-2 border-gray-200">
             <div className="flex items-center gap-3">
               <Check className="w-8 h-8 text-[#58CC02] px-1" strokeWidth={4} />
-              <span className="font-extrabold text-xl text-gray-700">Niveles (General)</span>
+              <span className="font-extrabold text-xl text-gray-700">Dominios iniciados</span>
             </div>
             <span className="font-black text-2xl text-[#58CC02]">{globalCompleted} / {globalTotal}</span>
           </div>

@@ -12,6 +12,8 @@ export type Level = {
   description: string;
   theory: string[];
   quiz: QuizQuestion[];
+  quizOrange?: QuizQuestion[];
+  quizPurple?: QuizQuestion[];
 };
 
 export type Subject = {
@@ -43,6 +45,24 @@ export const subjects: Subject[] = [
             options: ["Población", "Muestra", "Variable de estudio"],
             correctAnswer: 1,
             explanation: "Correcto. Los 300 médicos son solo una parte seleccionada del total, representan una muestra."
+          }
+        ],
+        quizOrange: [
+          {
+            id: "q_1_2",
+            question: "Nivel Naranja: Si un hospital tiene 10,000 médicos y tomamos a 50 de ellos que trabajan doble turno para un estudio, ¿qué afirmación es correcta?",
+            options: ["Los 10,000 médicos son la muestra.", "Los 50 médicos son una población representativa.", "Los 50 médicos son la muestra del estudio."],
+            correctAnswer: 2,
+            explanation: "Correcto. El subconjunto seleccionado para el escrutinio se denomina Muestra."
+          }
+        ],
+        quizPurple: [
+          {
+            id: "q_1_3",
+            question: "Nivel Morado: En una investigación exhaustiva (censo) sobre la demografía de un país entero, ¿cuál es la relación entre la muestra (n) y la población (N)?",
+            options: ["El tamaño de 'n' es igual a 'N' ya que se estudia a todos.", "El tamaño de 'n' debe ser la mitad de 'N'.", "Al hacer un censo, la población desaparece y se convierte en variable."],
+            correctAnswer: 0,
+            explanation: "Correcto. Como en un censo se entrevista a TODOS los elementos, la muestra es del mismo tamaño que la población entera."
           }
         ]
       },
@@ -274,6 +294,24 @@ export const subjects: Subject[] = [
             options: ["Los tiempos y movimientos de producción.", "El comportamiento humano y motivación.", "La burocracia gubernamental extrema."],
             correctAnswer: 1,
             explanation: "Correcto. Elton Mayo comprobó que factores psicológicos y el sentido de pertenencia impulsan más la productividad."
+          }
+        ],
+        quizOrange: [
+          {
+            id: "a_1_2",
+            question: "Nivel Naranja: Según Henri Fayol y la teoría Clásica de la administración, ¿cuál de los siguientes es considerado uno de sus 14 principios fundamentales?",
+            options: ["La especialización excluye al jefe.", "La Unidad de Mando.", "Producción en serie sin pausas."],
+            correctAnswer: 1,
+            explanation: "Correcto. La Unidad de Mando (que cada empleado reciba órdenes de un solo superior) es un pilar de Fayol."
+          }
+        ],
+        quizPurple: [
+          {
+            id: "a_1_3",
+            question: "Nivel Morado: Max Weber formuló el modelo de la Burocracia ideal. ¿Qué riesgo principal detectaron posteriormente en organizaciones hiperburocratizadas?",
+            options: ["Que las reglas escritas se vuelvan fines en sí mismas, retrasando las operaciones.", "Que haya rotación excesiva por falta de contratos.", "Que los métodos matemáticos no funcionen."],
+            correctAnswer: 0,
+            explanation: "Correcto. La 'jaula de hierro' o desplazamiento de objetivos significa que la burocracia se enfoca tanto en el reglamento que olvida su meta real."
           }
         ]
       },
