@@ -44,13 +44,25 @@ const CatMascot = ({ userName }: { userName: string | null }) => {
   
   useEffect(() => {
     const defaultName = userName ? userName : 'campeón';
+    
+    // Cálculo para el 30 de Mayo de 2026
+    const examDate = new Date(2026, 4, 30); // Mes 4 es Mayo en JS
+    const today = new Date();
+    const diffTime = examDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    let daysText = `¡Faltan ${diffDays} días para el examen!`;
+    if (diffDays === 0) daysText = "¡HOY ES EL EXAMEN! ¡Mucho éxito!";
+    if (diffDays < 0) daysText = "¡Espero que te haya ido excelente!";
+    
     const phrases = [
       `¡Tú puedes, ${defaultName}!`,
       "¡Vas muy bien!",
+      daysText,
       "¡Échale ganas!",
+      `¡Prepárate extra, nos quedan ${diffDays > 0 ? diffDays : 0} días!`,
       "¡Un nivel más!",
-      "¡No te rindas!",
-      "¡Eres genial!"
+      "¡No te rindas!"
     ];
     let currentMsg = phrases[Math.floor(Math.random() * phrases.length)];
     setMessage(currentMsg);
