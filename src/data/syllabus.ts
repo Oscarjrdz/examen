@@ -26,7 +26,7 @@ export type Subject = {
 export const subjects: Subject[] = [
   {
     id: "probabilidad",
-    title: "Probabilidad y Est.",
+    title: "Probabilidad y Estadística",
     description: "Estadística, Población, Conjuntos, Normal, etc.",
     levels: [
       {

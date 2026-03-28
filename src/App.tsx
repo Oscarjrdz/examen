@@ -39,6 +39,59 @@ const LOCAL_DICTIONARY: Record<string, string> = {
   "exani": "Examen Nacional de Ingreso a la Educación Superior. Evalúa competencias básicas y módulos de especialidad."
 };
 
+const CatMascot = ({ userName }: { userName: string | null }) => {
+  const [message, setMessage] = useState('');
+  
+  useEffect(() => {
+    const defaultName = userName ? userName : 'campeón';
+    const phrases = [
+      `¡Tú puedes, ${defaultName}!`,
+      "¡Vas muy bien!",
+      "¡Échale ganas!",
+      "¡Un nivel más!",
+      "¡No te rindas!",
+      "¡Eres genial!"
+    ];
+    let currentMsg = phrases[Math.floor(Math.random() * phrases.length)];
+    setMessage(currentMsg);
+    
+    const interval = setInterval(() => {
+      let newMsg;
+      do {
+        newMsg = phrases[Math.floor(Math.random() * phrases.length)];
+      } while (newMsg === currentMsg);
+      currentMsg = newMsg;
+      setMessage(newMsg);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [userName]);
+
+  if (!userName) return null;
+
+  return (
+    <div className="flex items-center gap-2 shrink-0">
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={message}
+          initial={{ opacity: 0, y: 5 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -5 }}
+          className="bg-gray-100 text-gray-700 text-[11px] font-extrabold px-3 py-1.5 rounded-2xl border-2 border-gray-200 shadow-sm whitespace-nowrap hidden min-[350px]:block"
+        >
+          {message}
+        </motion.div>
+      </AnimatePresence>
+      <motion.div
+        animate={{ rotate: [0, -10, 10, -10, 10, 0], y: [0, -4, 0] }}
+        transition={{ repeat: Infinity, duration: 4, repeatDelay: 1 }}
+        className="text-2xl origin-bottom"
+      >
+        🐱
+      </motion.div>
+    </div>
+  );
+};
+
 export default function App() {
   const [view, setView] = useState<ViewState>('LOGIN');
   const [currentUser, setCurrentUser] = useState<string | null>(null);
@@ -225,12 +278,13 @@ export default function App() {
 
   const TopBar = () => (
     <div className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b-2 border-gray-200 px-5 pt-[max(1rem,env(safe-area-inset-top))] pb-3 flex justify-between items-center shadow-sm shrink-0">
-      <div className="font-extrabold text-[#58CC02] text-2xl flex items-center gap-2">
-        <Brain className="w-8 h-8" /> Exani
+      <div className="font-extrabold text-[#58CC02] flex items-center gap-2 text-xl">
+        <Brain className="w-8 h-8 shrink-0" /> <span className="hidden sm:inline">Exani</span>
       </div>
-      <div className="flex items-center gap-4 font-bold text-gray-500 text-lg">
-        <div className="flex items-center gap-1.5 text-[#FFC800]">
-          <Star className="w-6 h-6 fill-current" /> {xp} 
+      <div className="flex items-center gap-3 font-bold text-gray-500 text-lg">
+        <CatMascot userName={currentUser} />
+        <div className="flex items-center gap-1.5 text-[#FFC800] bg-white border-2 border-gray-200 px-3 py-1.5 rounded-2xl shadow-sm">
+          {xp} <Star className="w-5 h-5 fill-current" />
         </div>
       </div>
     </div>
@@ -264,9 +318,6 @@ export default function App() {
 
         <div className="text-center mt-4 mb-8 px-2">
           <h2 className="text-2xl font-extrabold text-gray-800">{activeSub.title}</h2>
-          <div className="inline-block mt-2 font-bold px-3 py-1 rounded-full text-white text-xs uppercase tracking-widest" style={{backgroundColor: colors.main}}>
-             Fase {colors.name}
-          </div>
         </div>
 
         <div className="flex flex-col items-center gap-8 relative w-full pt-4">
