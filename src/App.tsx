@@ -41,28 +41,30 @@ const LOCAL_DICTIONARY: Record<string, string> = {
 
 const CatMascot = ({ userName }: { userName: string | null }) => {
   const [message, setMessage] = useState('');
-  
   useEffect(() => {
-    const defaultName = userName ? userName : 'campeón';
-    
-    // Cálculo para el 30 de Mayo de 2026
-    const examDate = new Date(2026, 4, 30); // Mes 4 es Mayo en JS
+    const examDate = new Date(2026, 4, 30);
     const today = new Date();
     const diffTime = examDate.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    let daysText = `¡Faltan ${diffDays} días para el examen!`;
-    if (diffDays === 0) daysText = "¡HOY ES EL EXAMEN! ¡Mucho éxito!";
-    if (diffDays < 0) daysText = "¡Espero que te haya ido excelente!";
+    let daysText = `Quedan ${diffDays} dias!!`;
+    if (diffDays === 0) daysText = "¡HOY EXAMEN!";
+    if (diffDays < 0) daysText = "Ya pasó :)";
     
+    const shortName = userName ? userName.substring(0, 6) : 'Pro';
+
     const phrases = [
-      `¡Tú puedes, ${defaultName}!`,
-      "¡Vas muy bien!",
-      daysText,
-      "¡Échale ganas!",
-      `¡Prepárate extra, nos quedan ${diffDays > 0 ? diffDays : 0} días!`,
-      "¡Un nivel más!",
-      "¡No te rindas!"
+      "¡Tú puedes!", "¡Vas muy bien!", daysText, "¡Un 10 seguro!",
+      "¡No te rindas!", "¡Eres genial!", "Paso a paso", "¡Máster!", "¡Dale!",
+      "Casi listo", "Con todo", "¡Qué crack!", "Mente fría", "Futuro Puma", 
+      "Súper genio", "A estudiar", "Imparable", `${shortName} Wins!`, "Enfocado", 
+      "Va que va", "Sin excusas", "Nivel Dios", "¡Arriba!", "Bien hecho",
+      "¡Ánimo!", "¡A volar!", "Puro UANL", "Tigres al 100", "Pide 100",
+      "Un paso más", "Pura garra", "Mente Clara", "Tú sabes", "¡Rugiendo!",
+      "A triunfar", "Excelente", "Cerebro x100", "Oro puro", "Casi Tigre", 
+      "100% EXANI", "Sin miedo", "Ya casi", "Va perfecto", "A probarte",
+      "Inteligente", "Súper Top", "¡Venga!", "Toma aire", "Respira...",
+      "En la Cima", "Todo Suma", "¡Avanza!"
     ];
     let currentMsg = phrases[Math.floor(Math.random() * phrases.length)];
     setMessage(currentMsg);
@@ -103,6 +105,36 @@ const CatMascot = ({ userName }: { userName: string | null }) => {
     </div>
   );
 };
+
+const ChestSVG = ({ isOpen, color, darkColor }: { isOpen: boolean, color: string, darkColor: string }) => {
+  return (
+    <div className={`relative ${isOpen ? 'w-24 h-24' : 'w-16 h-16'} drop-shadow-md`}>
+       {isOpen && <div className="absolute inset-0 bg-white blur-xl opacity-40 rounded-full animate-pulse z-0"></div>}
+       <svg viewBox="0 0 100 100" className="w-full h-full relative z-10 overflow-visible">
+         <path d="M10,45 L15,85 Q50,95 85,85 L90,45 Z" fill={color} stroke={darkColor} strokeWidth="4" strokeLinejoin="round" />
+         <path d="M30,45 L33,88" stroke="rgba(0,0,0,0.15)" strokeWidth="6" strokeLinecap="round" />
+         <path d="M70,45 L67,88" stroke="rgba(0,0,0,0.15)" strokeWidth="6" strokeLinecap="round" />
+         
+         {isOpen ? (
+           <>
+             <path d="M10,45 Q50,0 90,45 Q50,25 10,45 Z" fill="#FFC800" stroke={darkColor} strokeWidth="4" />
+             <circle cx="50" cy="25" r="14" fill="#FFF" className="animate-pulse opacity-80" />
+             <path d="M50,0 L50,-10 M32,8 L20,-5 M68,8 L80,-5" stroke="#FFD700" strokeWidth="4" strokeLinecap="round" className="animate-pulse" />
+           </>
+         ) : (
+           <>
+             <path d="M10,45 Q50,20 90,45 Z" fill={color} stroke={darkColor} strokeWidth="4" />
+             <path d="M8,45 Q50,45 92,45" stroke="rgba(0,0,0,0.15)" strokeWidth="4" />
+             <path d="M28,45 Q31,30 33,26" stroke="rgba(0,0,0,0.15)" strokeWidth="6" strokeLinecap="round" />
+             <path d="M72,45 Q69,30 67,26" stroke="rgba(0,0,0,0.15)" strokeWidth="6" strokeLinecap="round" />
+           </>
+         )}
+         <circle cx="50" cy="45" r="8" fill="#FFC800" stroke={darkColor} strokeWidth="2" />
+         <path d="M48,45 L52,45 L50,52 Z" fill={darkColor} />
+       </svg>
+    </div>
+  )
+}
 
 export default function App() {
   const [view, setView] = useState<ViewState>('LOGIN');
@@ -328,8 +360,9 @@ export default function App() {
           ))}
         </div>
 
-        <div className="text-center mt-4 mb-8 px-2">
-          <h2 className="text-2xl font-extrabold text-gray-800">{activeSub.title}</h2>
+        <div className="flex flex-col items-center mt-6 mb-10 w-full relative z-10 px-2 text-center">
+          <ChestSVG isOpen={true} color={colors.main} darkColor={colors.dark} />
+          <h2 className="text-2xl font-black text-gray-800 mt-2 uppercase tracking-tighter drop-shadow-sm leading-tight">{activeSub.title}</h2>
         </div>
 
         <div className="flex flex-col items-center gap-8 relative w-full pt-4">
@@ -407,8 +440,8 @@ export default function App() {
                       style={{ backgroundColor: t.main, borderBottomColor: t.dark, boxShadow: `0 6px 0 ${t.shadow}` }}
                     >
                       <div className="absolute inset-0 bg-black/10 z-0"></div>
-                      <Lock className="w-12 h-12 mb-2 z-10 opacity-90" strokeWidth={3} />
-                      <h3 className="text-xl font-black z-10 uppercase tracking-widest text-center opacity-95 leading-tight">{t.name}</h3>
+                      <ChestSVG isOpen={false} color={t.main} darkColor={t.dark} />
+                      <h3 className="text-xl font-black z-10 uppercase tracking-widest text-center opacity-95 leading-tight mt-2">{t.name}</h3>
                       <p className="text-sm font-extrabold z-10 opacity-80 mt-1">{t.title}</p>
                     </div>
                     
