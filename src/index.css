@@ -14,13 +14,20 @@
 
 body {
   font-family: var(--font-family-body);
-  background-color: #f7f7f7;
-  color: var(--text-dark);
+  background-color: #ffffff;
+  color: var(--color-text-dark);
+  -webkit-tap-highlight-color: transparent;
 }
+
+/* Chrome/iOS Safe Area Optimizations in root classes */
+.safe-pt { padding-top: max(1rem, env(safe-area-inset-top)); }
+.safe-pb { padding-bottom: max(1rem, env(safe-area-inset-bottom)); }
 
 .button-3d {
   position: relative;
   transition: transform 0.1s, box-shadow 0.1s;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .button-3d:active {
